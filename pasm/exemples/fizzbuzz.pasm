@@ -2,14 +2,12 @@
 
 jmp $main
 
-
 #main:
 	push $seed
 	jmp $start
 
 #start:
 	jmp $try_fizz
-
 
 #try_fizz:
 	dup
