@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "machine-defs.h": "c",
+        "machine-run.h": "c",
+        "machine.h": "c",
+        "sv.h": "c",
+        "asm.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}

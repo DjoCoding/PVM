@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "asm-parser.h": "c",
+        "asm-printer.h": "c",
+        "asm-defs.h": "c",
+        "asm-clean.h": "c",
+        "error.h": "c",
+        "ctype.h": "c",
+        "asm-preprocess.h": "c",
+        "asm-code.h": "c",
+        "asm.h": "c"
+    }
+}
