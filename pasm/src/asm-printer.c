@@ -38,7 +38,7 @@ char *inst_kind_to_cstr(Inst_Kind kind) {
         "nop",
         "halt",
         "push",
-        "push_str",
+        "pushs",
         "pop",
         "add",
         "sub",
@@ -58,6 +58,8 @@ char *inst_kind_to_cstr(Inst_Kind kind) {
         "jl",
         "jg",
         "putc",
+        "call",
+        "ret",
     };
 
     size_t inst_size = sizeof(kinds)/sizeof(kinds[0]);

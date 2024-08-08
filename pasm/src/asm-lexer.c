@@ -161,11 +161,23 @@ static PASM_Token pasm_lexer_read_token(PASM *self) {
     THROW_ERROR(LOC_FMT ": failed to identify the char `%c`\n", LOC_UNWRAP(token.loc), current);
 }
 
+void pasm_lexer_skip_comment(PASM *self) {
+    char current = lpeek(self);
+    if (current == ';') {
+        while (!leof(self)) {
+            current = lpeek(self);
+            if (current == '\n') { break; }
+            ladvance(self);
+        }
+    }
+}
+
 void pasm_lexer_lex(PASM *self) {
     DA_INIT(&self->tokens, sizeof(PASM_Token));
     while (!leof(self)) {
         char current = lpeek(self);
-        if (current == ' ' || current == '\t') { ladvance(self); }
+        if (current == ';') { pasm_lexer_skip_comment(self); }
+        else if (current == ' ' || current == '\t') { ladvance(self); }
         else {
             PASM_Token token = lread(self);
             DA_APPEND(&self->tokens, token);

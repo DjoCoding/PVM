@@ -30,4 +30,5 @@ void machine_dump_stack(Machine *self) {
     }
     printf("\t%ld\n", self->stack.items[0]);
     printf("Stack-End---\n");
+    printf("\n");
 }

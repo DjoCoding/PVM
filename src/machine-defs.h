@@ -62,7 +62,7 @@ enum Inst_Kind {
     INST_KIND_NOP,
     INST_KIND_HALT,
     INST_KIND_PUSH,
-    INST_KIND_PUSH_STR,
+    INST_KIND_PUSHS,
     INST_KIND_POP,
     INST_KIND_ADD,
     INST_KIND_SUB,
@@ -82,6 +82,8 @@ enum Inst_Kind {
     INST_KIND_JL,
     INST_KIND_JG,
     INST_KIND_PUTC,
+    INST_KIND_CALL,
+    INST_KIND_RET,
     INST_KIND_NO_KIND,
 };
 

@@ -20,8 +20,8 @@ void handle_push_inst(Machine *self, Inst inst) {
     self->ip++;
 }
 
-void handle_push_str_inst(Machine *self, Inst inst) {
-    ASSERT(inst.kind == INST_KIND_PUSH_STR, "could not execute the instruction");
+void handle_pushs_inst(Machine *self, Inst inst) {
+    ASSERT(inst.kind == INST_KIND_PUSHS, "could not execute the instruction");
 
     if (inst.ops.count != 1) { THROW_ERROR("`push_str` instruction accepts one operand"); }
 
@@ -266,6 +266,22 @@ void handle_putc_inst(Machine *self) {
     self->ip++;
 }
 
+void handle_call_inst(Machine *self, Inst inst) {
+    ASSERT(inst.kind == INST_KIND_CALL, "could not execute the instruction");
+
+    if (inst.ops.count != 1) { THROW_ERROR("`call` instruction accepts one operand"); }
+
+    Inst_Op op = inst.ops.items[0];
+    if (op.kind != OP_KIND_NUMBER) { THROW_ERROR("`call` instruction accepts a number as an operand"); }
+
+    push(self, self->ip);
+    self->ip = op.value;
+}
+
+void handle_ret_inst(Machine *self) {
+    self->ip = (size_t) pop(self) + 1;
+}
+
 void machine_exec_inst(Machine *self, Inst inst) {
     switch(inst.kind) {
         case INST_KIND_NOP:
@@ -277,8 +293,8 @@ void machine_exec_inst(Machine *self, Inst inst) {
         case INST_KIND_PUSH:
             handle_push_inst(self, inst);
             break;
-        case INST_KIND_PUSH_STR:
-            handle_push_str_inst(self, inst);
+        case INST_KIND_PUSHS:
+            handle_pushs_inst(self, inst);
             break;
         case INST_KIND_POP:
             handle_pop_inst(self);
@@ -334,6 +350,12 @@ void machine_exec_inst(Machine *self, Inst inst) {
             break;
         case INST_KIND_PUTC:
             handle_putc_inst(self);
+            break;
+        case INST_KIND_CALL:
+            handle_call_inst(self, inst);
+            break;
+        case INST_KIND_RET:
+            handle_ret_inst(self);
             break;
         default:
             ASSERT(false, "unreachable");

@@ -3,7 +3,7 @@
 jmp $main
 
 #main:
-	push_str $HELLO
+	pushs $HELLO
 	syscall 0
 	push 10
 	putc 

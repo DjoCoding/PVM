@@ -1,4 +1,4 @@
-#const seed 69, fizz "fizz", buzz "buzz", done_ "done\n" end
+#const seed 100, fizz "fizz", buzz "buzz", done_ "done\n" end
 
 jmp $main
 
@@ -33,21 +33,21 @@ jmp $main
 	jz $print_buzz
 
 #print_buzz:
-	push_str $buzz
+	pushs $buzz
 	syscall 0
 	push 5
 	sub
 	jmp $start
 
 #print_fizz:
-	push_str $fizz
+	pushs $fizz
 	syscall 0
 	push 3
 	sub
 	jmp $start
 
 #done:
-	push_str $done_
+	pushs $done_
 	syscall 0
 	halt
 

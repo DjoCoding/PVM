@@ -39,7 +39,7 @@ bool is_instruction(String_View s, Inst_Kind *kind) {
         "nop",
         "halt",
         "push",
-        "push_str",
+        "pushs",
         "pop",
         "add",
         "sub",
@@ -59,6 +59,8 @@ bool is_instruction(String_View s, Inst_Kind *kind) {
         "jl",
         "jg",
         "putc",
+        "call",
+        "ret",
     };
 
     size_t inst_size = sizeof(instructions)/sizeof(instructions[0]);
@@ -239,7 +241,7 @@ PASM_Node pasm_parser_parse_statement(PASM *self) {
     Inst_Kind kind = 0;
     if (is_instruction(token.text, &kind)) { return pasm_parser_parse_instruction(self, kind); }
 
-    ASSERT(false, "unreachable");
+    THROW_ERROR("invalid instruction found: `" SV_FMT "`", SV_UNWRAP(token.text));
 }
 
 void pasm_parser_parse(PASM *self) {
