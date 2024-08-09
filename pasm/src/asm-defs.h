@@ -20,8 +20,9 @@ struct Location {
 typedef Inst PASM_Inst; 
 typedef Program PASM_Prog;
 
-typedef struct PASM_Const_Pool PASM_Const_Pool;
-typedef struct PASM_Labels PASM_Labels;
+typedef enum PASM_Context_Value_Type PASM_Context_Value_Type;
+typedef union PASM_Context_Value_As PASM_Context_Value_As;
+typedef struct PASM_Context_Value PASM_Context_Value;
 typedef struct PASM_Context PASM_Context;
 
 typedef enum PASM_Token_Kind PASM_Token_Kind;
@@ -148,9 +149,24 @@ struct PASM_Const_Pool {
     size_t count;
 };
 
+enum PASM_Context_Value_Type {
+    PASM_CONTEXT_VALUE_TYPE_LABEL = 0,
+    PASM_CONTEXT_VALUE_TYPE_CONST,
+};
+
+union PASM_Context_Value_As {
+    size_t label; // for the label mark
+    PASM_Context_Const constant;
+};
+
+struct PASM_Context_Value {
+    PASM_Context_Value_Type type;
+    PASM_Context_Value_As as;
+};
+
 struct PASM_Context {
-    PASM_Const_Pool consts;
-    PASM_Labels labels;
+    HashMap map;
+    size_t count;
 };
 
 struct PASM {

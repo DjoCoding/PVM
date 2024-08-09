@@ -9,9 +9,17 @@ bool preprocess_kinds[] = {
 
 void pasm_process_const(PASM *self, PASM_Const constant) {
     char *const_name = cstr_from_sv(constant.name);
-    if (hashmap_find(&self->context.consts.map, const_name)) {
-        THROW_ERROR("constant `%s` declared twice", const_name);
-    } 
+    
+    PASM_Context_Value context_value = {0};
+    if (hashmap_get(&self->context.map, const_name, (void *)&context_value)) {
+        free(const_name);
+
+        if (context_value.type == PASM_CONTEXT_VALUE_TYPE_LABEL) {
+            THROW_ERROR("constant `" SV_FMT "` already declared as a label", SV_UNWRAP(constant.name));
+        }
+
+        THROW_ERROR("constant `" SV_FMT "` declared twice", SV_UNWRAP(constant.name));
+    }
     
     PASM_Context_Const new_const;
     new_const.type = constant.kind;
@@ -31,9 +39,13 @@ void pasm_process_const(PASM *self, PASM_Const constant) {
     } else {
         THROW_ERROR("type not implemented yet");
     }
+
+    context_value.type = PASM_CONTEXT_VALUE_TYPE_CONST;
+    context_value.as.constant = new_const;
     
-    hashmap_add(&self->context.consts.map, const_name, &new_const);
-    self->context.consts.count++;
+
+    hashmap_add(&self->context.map, const_name, (void *)&context_value);
+    self->context.count++;
 }
 
 void pasm_process_consts(PASM *self, PASM_Node node) {
@@ -44,12 +56,23 @@ void pasm_process_consts(PASM *self, PASM_Node node) {
 
 void pasm_process_labels(PASM *self, PASM_Node node) {
     char *label_name = cstr_from_sv(node.as.label);
-    if (hashmap_find(&self->context.labels.map, label_name)) {
-        THROW_ERROR("label `%s` declared twice", label_name);
+
+    PASM_Context_Value context_value = {0};
+    if (hashmap_get(&self->context.map, label_name, (void *)&context_value)) {
+        free(label_name);
+
+        if (context_value.type == PASM_CONTEXT_VALUE_TYPE_CONST) {
+            THROW_ERROR("label `" SV_FMT "` already declared as a constant", SV_UNWRAP(node.as.label));
+        }
+
+        THROW_ERROR("label `" SV_FMT "` declared twice", SV_UNWRAP(node.as.label));
     }
 
-    hashmap_add(&self->context.labels.map, label_name, &self->prog_size);
-    self->context.labels.count++;
+    context_value.type = PASM_CONTEXT_VALUE_TYPE_LABEL;
+    context_value.as.label = self->prog_size;
+
+    hashmap_add(&self->context.map, label_name, (void *)&context_value);
+    self->context.count++;
 }
 
 void pasm_preprocess_node(PASM *self, PASM_Nodes nodes, size_t current) {
@@ -67,9 +90,8 @@ void pasm_preprocess_node(PASM *self, PASM_Nodes nodes, size_t current) {
 }
 
 void pasm_preprocess(PASM *self) {
-    // initialize the hashmaps
-    hashmap_init(&self->context.consts.map, sizeof(PASM_Context_Const));
-    hashmap_init(&self->context.labels.map, sizeof(int64_t));
+    // initialize the hashmap
+    hashmap_init(&self->context.map, sizeof(PASM_Context_Value));
 
     self->prog_size = 0;
 

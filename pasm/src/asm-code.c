@@ -5,24 +5,45 @@ void pasm_process_operand(PASM *self, Inst_Op *op) {
 
     char *id = (char *)op->value;
 
-    // search in the hashmaps
-    PASM_Context_Const constant = {0};
-    if (hashmap_get(&self->context.consts.map, id, &constant)) {
-        if (constant.type == TYPE_STRING) { op->kind = OP_KIND_STRING; }
-        else if (constant.type == TYPE_CHAR || constant.type == TYPE_NUMBER) { op->kind = OP_KIND_NUMBER; }
-        else { THROW_ERROR("type not implemented yet"); }
-        op->value = constant.value;
+    PASM_Context_Value context_value = {0};
+
+    if (!hashmap_get(&self->context.map, id, (void *)&context_value)) {
+        THROW_ERROR("`%s` not declared yet", id);
+    }
+
+    if (context_value.type == PASM_CONTEXT_VALUE_TYPE_CONST) {
+        PASM_Context_Const constant = context_value.as.constant;
+        
+        if (constant.type == TYPE_STRING) {
+            op->kind = OP_KIND_STRING;
+            op->value = (int64_t)constant.value;
+            return;
+        }
+
+        if (constant.type == TYPE_NUMBER) {
+            op->kind = OP_KIND_NUMBER;
+            op->value = constant.value;
+            return;
+        }
+        
+        if (constant.type == TYPE_CHAR) {
+            op->kind = OP_KIND_NUMBER;
+            op->value = constant.value;
+            return;
+        }
+
+        ASSERT(false, "unreachable");
+    }
+
+
+    if (context_value.type == PASM_CONTEXT_VALUE_TYPE_LABEL) {
+        size_t address = context_value.as.label;
+        op->kind = OP_KIND_NUMBER;
+        op->value = (int64_t)address;
         return;
     }
 
-    size_t ip = 0;
-    if (hashmap_get(&self->context.labels.map, id, &ip)) {
-        op->kind = OP_KIND_NUMBER;
-        op->value = ip;
-        return;
-    } 
-    
-    THROW_ERROR("%s not declared yet", id);
+    ASSERT(false, "unreachable");
 }
 
 void pasm_process_instruction(PASM *self, PASM_Node node) {
@@ -37,23 +58,24 @@ void pasm_set_entry_point(PASM *self, PASM_Node node) {
         THROW_ERROR("entry point already set at %zu", self->prog.entry.ip);
     }
 
-    // search for the label in the labels context
-    // set the ip in the self->prog.entry field
-
     // get the label name
     char *name = cstr_from_sv(node.as.label);
     
-    size_t ip = 0;
+    PASM_Context_Value context_value = {0};
 
-    if (!hashmap_get(&self->context.labels.map, name, (void *)&ip)) {
+    if (!hashmap_get(&self->context.map, name, (void *)&context_value)) {
         free(name);
         THROW_ERROR("label `" SV_FMT "` not declared", SV_UNWRAP(node.as.label));
     }
 
     free(name);
 
+    if (context_value.type == PASM_CONTEXT_VALUE_TYPE_CONST) {
+        THROW_ERROR("expected a label but got a constant `" SV_FMT "`", SV_UNWRAP(node.as.label));
+    }
+
     self->prog.entry.entry_set = true;
-    self->prog.entry.ip = ip;
+    self->prog.entry.ip = context_value.as.label;
 }
 
 void pasm_generate_bytecode(PASM *self) {   
