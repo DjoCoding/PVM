@@ -101,6 +101,7 @@ enum PASM_Node_Kind {
     NODE_KIND_INSTRUCTION = 0,
     NODE_KIND_LABEL_DEF,
     NODE_KIND_CONST_DEF,
+    NODE_KIND_ENTRY,
 };
 
 struct PASM_Consts {

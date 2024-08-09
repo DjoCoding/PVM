@@ -1,5 +1,11 @@
 #include "asm-preprocess.h"
 
+bool preprocess_kinds[] = {
+    false, // NODE_KIND_INSTRUCTION
+    true,  // NODE_KIND_LABEL_DEF
+    true,  // NODE_KIND_CONST_DEF
+    false, // NODE_KIND_ENTRY
+};
 
 void pasm_process_const(PASM *self, PASM_Const constant) {
     char *const_name = cstr_from_sv(constant.name);
@@ -68,7 +74,7 @@ void pasm_preprocess(PASM *self) {
     self->prog_size = 0;
 
     for (size_t i = 0; i < self->nodes.count; ++i) {
-        if (self->nodes.items[i].kind != NODE_KIND_INSTRUCTION) {
+        if (preprocess_kinds[self->nodes.items[i].kind]) {
             pasm_preprocess_node(self, self->nodes, i);
         } else { self->prog_size++; }
     }

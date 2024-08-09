@@ -58,6 +58,7 @@ typedef struct Inst_Op Inst_Op;
 typedef enum Inst_Kind Inst_Kind;
 typedef struct Inst_Ops Inst_Ops;
 typedef struct Inst Inst;
+typedef struct Program_Entry Program_Entry;
 typedef struct Program Program;
 
 typedef enum SysCall_ID SysCall_ID;
@@ -118,11 +119,16 @@ struct Inst {
     Inst_Ops ops;
 };
 
+struct Program_Entry {
+    size_t ip;
+    bool entry_set;
+};
+
 struct Program {
     Inst *items;
     size_t count;
     size_t size;
-    size_t entry;
+    Program_Entry entry;
 };
 
 

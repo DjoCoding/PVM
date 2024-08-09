@@ -376,9 +376,11 @@ void machine_exec_prog(Machine *self, Program prog) {
     if (prog.count == 0) { return; }
 
     self->halted = false;
-    
+
     // set the entry point
-    self->ip = prog.entry;
+    if (prog.entry.entry_set) {
+        self->ip = prog.entry.ip;
+    } else { self->ip = 0; }
 
     while (!self->halted) {
         if (self->ip >= prog.count) { THROW_ERROR("instruction pointer out of bounds, did you forget to add `halt`?"); }

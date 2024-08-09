@@ -220,11 +220,39 @@ PASM_Node pasm_parser_parse_label_definition(PASM *self) {
     return (PASM_Node) { .kind = NODE_KIND_LABEL_DEF, .as.label = label };
 }
 
+PASM_Node pasm_parser_parse_entry(PASM *self) {
+    if (peol(self)) { THROW_ERROR("expected entry defintion but end of line found"); }
+
+    PASM_Token token = ppeek(self);
+    if (token.kind != TOKEN_KIND_PREPROCESS) { THROW_ERROR("expected the entry defintion but else found"); }
+
+    padv(self);
+
+    if (peol(self)) { THROW_ERROR("expected a `:` for the label definition but end of line found"); }
+    if (ppeek(self).kind != TOKEN_KIND_COLON) { THROW_ERROR("expected a `:` for the label defintion but `" SV_FMT "` found", SV_UNWRAP(ppeek(self).text)); }
+
+    // consuming the `:` token 
+    padv(self);
+
+    token = ppeek(self);
+    if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected the entry point label argument but else found"); }
+
+    String_View label_name = token.text;
+
+    padv(self);
+
+    return (PASM_Node) {  .kind = NODE_KIND_ENTRY, .as.label = label_name };
+}
+
 PASM_Node pasm_parser_parse_preprocess_statement(PASM *self) {
     PASM_Token token = ppeek(self);
     
     if (sv_eq(token.text, SV("const"))) { 
         return pasm_parser_parse_const_declaration(self); 
+    }
+    
+    if (sv_eq(token.text, SV("entry"))) {
+        return pasm_parser_parse_entry(self);
     }
 
     // it should be a label defintion
