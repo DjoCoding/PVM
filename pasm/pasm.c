@@ -22,9 +22,10 @@ int main(int argc, char **argv) {
 
     PASM pasm = {0};
     compile(&pasm, file_path);
-
+    
     Machine machine = machine_init();
     machine_exec_prog(&machine, pasm.prog);
+    machine_clean(&machine);
     
     return 0;
 }

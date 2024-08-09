@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include "error.h"
 
-#define HASH_MAP_SIZE 1024
+#define HASH_MAP_SIZE 20
 
 typedef struct HashMap HashMap;
 typedef struct HashMap_Node HashMap_Node;

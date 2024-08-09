@@ -1,10 +1,10 @@
 #include "sv.h"
 
 String_View sv_from_cstr(char *s) {
-    return (String_View) {
-        .content = s, 
-        .count = (s == NULL) ? 0 : strlen(s),
-    };
+    String_View sv = {0};
+    sv.content = s;
+    if (s) sv.count = strlen(s);
+    return sv;
 }
 
 char *cstr_from_sv(String_View s) {

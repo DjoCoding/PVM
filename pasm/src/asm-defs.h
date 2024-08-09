@@ -47,6 +47,8 @@ typedef struct PASM_Nodes PASM_Nodes;
 typedef struct PASM_Lexer PASM_Lexer;
 typedef struct PASM_Parser PASM_Parser;
 
+typedef String_Slices PASM_External_Files;
+
 typedef String_Slices PASM_Strings;
 
 typedef struct PASM PASM;
@@ -103,6 +105,7 @@ enum PASM_Node_Kind {
     NODE_KIND_LABEL_DEF,
     NODE_KIND_CONST_DEF,
     NODE_KIND_ENTRY,
+    NODE_KIND_USE,
 };
 
 struct PASM_Consts {
@@ -115,6 +118,7 @@ union PASM_Node_As {
     PASM_Inst inst;
     String_View label;
     PASM_Consts constants;
+    String_View file_path;
 };
 
 struct PASM_Node {
@@ -144,11 +148,6 @@ struct PASM_Context_Const {
     int64_t value;
 };
 
-struct PASM_Const_Pool {
-    HashMap map;
-    size_t count;
-};
-
 enum PASM_Context_Value_Type {
     PASM_CONTEXT_VALUE_TYPE_LABEL = 0,
     PASM_CONTEXT_VALUE_TYPE_CONST,
@@ -176,6 +175,7 @@ struct PASM {
     PASM_Nodes nodes;
     PASM_Lexer lexer;
     PASM_Parser parser;
+    PASM_External_Files files;
 
     PASM_Context context;
     PASM_Prog prog;

@@ -20,6 +20,8 @@ char *node_kind_to_cstr(PASM_Node_Kind kind) {
         "instruction",
         "label-def",
         "const-def",
+        "entry-def",
+        "use",
     };
     return kinds[kind];
 }
@@ -121,13 +123,16 @@ void pasm_print_node(PASM_Node node) {
     if (node.kind == NODE_KIND_INSTRUCTION) { pasm_print_inst(node.as.inst); }
     else if (node.kind == NODE_KIND_CONST_DEF) { pasm_print_consts(node.as.constants); }
     else if (node.kind == NODE_KIND_LABEL_DEF) { printf(SV_FMT, SV_UNWRAP(node.as.label)); }
+    else if (node.kind == NODE_KIND_ENTRY) { printf("entry: `" SV_FMT "`", SV_UNWRAP(node.as.label)); }
+    else if (node.kind == NODE_KIND_USE) { printf("use: `" SV_FMT "` file", SV_UNWRAP(node.as.file_path)); }
     else { ASSERT(false, "unreachable"); }
     
-    printf("\n");
+    printf("\n\n");
 }
 
 void pasm_print_nodes(PASM *self) {
     for (size_t i = 0; i < self->nodes.count; ++i) {
+        printf("%zu - ", i + 1);
         pasm_print_node(self->nodes.items[i]);
     }
 }

@@ -244,6 +244,25 @@ PASM_Node pasm_parser_parse_entry(PASM *self) {
     return (PASM_Node) {  .kind = NODE_KIND_ENTRY, .as.label = label_name };
 }
 
+PASM_Node pasm_parser_parse_use(PASM *self) {
+    if (peol(self)) { THROW_ERROR("expected use statement but end of line found"); }
+
+    PASM_Token token = ppeek(self);
+    if (token.kind != TOKEN_KIND_PREPROCESS) { THROW_ERROR("expected the use statement but else found"); }
+
+    padv(self);
+
+    if (peol(self)) { THROW_ERROR("expected a path to external file but end of line found"); }
+    
+    token = ppeek(self);
+    if (token.kind != TOKEN_KIND_STRING) { THROW_ERROR("expected path to file for the use statement but `" SV_FMT "` found", SV_UNWRAP(ppeek(self).text)); }
+
+    // consuming the file path token 
+    padv(self);
+
+    return (PASM_Node) {  .kind = NODE_KIND_USE, .as.file_path = token.text };
+}
+
 PASM_Node pasm_parser_parse_preprocess_statement(PASM *self) {
     PASM_Token token = ppeek(self);
     
@@ -253,6 +272,10 @@ PASM_Node pasm_parser_parse_preprocess_statement(PASM *self) {
     
     if (sv_eq(token.text, SV("entry"))) {
         return pasm_parser_parse_entry(self);
+    }
+
+    if (sv_eq(token.text, SV("use"))) {
+        return pasm_parser_parse_use(self);
     }
 
     // it should be a label defintion

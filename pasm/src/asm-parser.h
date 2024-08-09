@@ -4,6 +4,7 @@
 #include "asm-defs.h"
 #include "asm-printer.h"
 #include "asm-clean.h"
+#include "asm-code-processor.h"
 
 #define MAKE_STRING_OPERAND(s)           ((Inst_Op) { .kind = OP_KIND_STRING,  .value = (int64_t)(s)  })
 #define MAKE_NUMBER_OPERAND(i)           ((Inst_Op) { .kind = OP_KIND_NUMBER , .value = (int64_t)(i)  })
