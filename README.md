@@ -17,9 +17,9 @@ Below is a very simple code snippet in pasm (PACKL Assembler) that prints "Hello
  ret             ; return to caller 
 
 #main:
-	pushs $HELLO    ; push the constant `HELLO`
-	call $println   ; call `println`
-	halt            ; halt the machine
+ pushs $HELLO    ; push the constant `HELLO`
+ call $println   ; call `println`
+ halt            ; halt the machine
 
 #entry: $main    ; set `main` as entry point for the program
 ```
