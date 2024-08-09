@@ -8,6 +8,7 @@
 #include "machine-error.h"
 #include "machine-stack.h"
 #include "machine-memory.h"
+#include "machine-routine.h"
 
 void machine_exec_prog(Machine *self, Program prog);
 

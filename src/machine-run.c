@@ -274,12 +274,22 @@ void handle_call_inst(Machine *self, Inst inst) {
     Inst_Op op = inst.ops.items[0];
     if (op.kind != OP_KIND_NUMBER) { THROW_ERROR("`call` instruction accepts a number as an operand"); }
 
-    push(self, self->ip);
+    machine_start_routine(self, self->ip);
     self->ip = op.value;
 }
 
 void handle_ret_inst(Machine *self) {
-    self->ip = (size_t) pop(self) + 1;
+    // if the machine has no routines (even the entry one) then we stop executing
+    if (machine_end_of_routines(self)) { 
+        self->halted = true;
+        return;
+    }
+
+    // end this routine and get the address of the previous routine
+    size_t ip = machine_end_routine(self);
+
+    // reassing the ip address
+    self->ip = ip + 1;
 }
 
 void machine_exec_inst(Machine *self, Inst inst) {
@@ -364,7 +374,12 @@ void machine_exec_inst(Machine *self, Inst inst) {
 
 void machine_exec_prog(Machine *self, Program prog) {
     if (prog.count == 0) { return; }
+
     self->halted = false;
+    
+    // set the entry point
+    self->ip = prog.entry;
+
     while (!self->halted) {
         if (self->ip >= prog.count) { THROW_ERROR("instruction pointer out of bounds, did you forget to add `halt`?"); }
         machine_exec_inst(self, prog.items[self->ip]);

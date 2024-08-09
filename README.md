@@ -7,13 +7,14 @@ Below is a very simple code snippet in pasm (PACKL Assembler) that prints "Hello
 
 ```asm
 #const HELLO "Hello World" end
+#const NEW_LINE 10 end
 
 jmp $main
 
 #main:
-	push_str $HELLO
+	pushs $HELLO
 	syscall 0
-	push 10
+	push $NEW_LINE
 	putc 
 	halt
 ```

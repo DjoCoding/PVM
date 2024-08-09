@@ -14,6 +14,7 @@ typedef struct Memory_Cell Memory_Cell;
 typedef struct Machine_Memory Machine_Memory;
 typedef struct Machine_Stack Machine_Stack;
 typedef enum Machine_State Machine_State;
+typedef struct Machine_SubRoutine_Stack Machine_SubRoutine_Stack;
 typedef String_Slices Machine_String_Stack;
 typedef struct Machine Machine;
 
@@ -34,11 +35,19 @@ struct Machine_Stack {
     size_t size;
 };
 
+#define SUBROUTINE_STACK_CAP 1000
+
+struct Machine_SubRoutine_Stack {
+    size_t items[SUBROUTINE_STACK_CAP];
+    size_t count;
+};
+
 
 struct Machine {
     Machine_Stack stack;
     Machine_Memory memory;
     Machine_String_Stack str_stack; // will be used to load pre-defined strings from files
+    Machine_SubRoutine_Stack subroutines;
     bool halted;
     size_t ip;
 };
@@ -113,6 +122,7 @@ struct Program {
     Inst *items;
     size_t count;
     size_t size;
+    size_t entry;
 };
 
 
