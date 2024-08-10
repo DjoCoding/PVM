@@ -29,5 +29,6 @@ int hashmap_find(HashMap *self, char *key);
 int hashmap_add(HashMap *self, char *key, void *value);
 int hashmap_remove(HashMap *self, char *key);
 int hashmap_update(HashMap *self, char *key, void *value);
+int hashmap_empty(HashMap *self);
 
 #endif

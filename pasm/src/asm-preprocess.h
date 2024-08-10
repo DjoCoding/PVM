@@ -4,6 +4,7 @@
 #include "asm-defs.h"
 #include "asm-code.h"
 #include "asm-code-processor.h"
+#include "asm-init.h"
 
 #define preprocess pasm_preprocess
 

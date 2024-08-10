@@ -17,39 +17,39 @@ struct Location {
 #define LOC_FMT         "(%zu, %zu)"
 #define LOC_UNWRAP(loc) loc.line, loc.col
 
+typedef struct Strings Strings;
+
+struct Strings {
+    char **items;
+    size_t count;
+    size_t size;
+};
+
 typedef Inst PASM_Inst; 
 typedef Program PASM_Prog;
-
 typedef enum PASM_Context_Value_Type PASM_Context_Value_Type;
 typedef union PASM_Context_Value_As PASM_Context_Value_As;
 typedef struct PASM_Context_Value PASM_Context_Value;
 typedef struct PASM_Context PASM_Context;
-
 typedef enum PASM_Token_Kind PASM_Token_Kind;
 typedef union PASM_Token_As PASM_Token_As;
 typedef struct PASM_Token PASM_Token;
 typedef struct PASM_Tokens PASM_Tokens;
-
 typedef enum PASM_Type PASM_Type;
-
 typedef struct PASM_Context_Const PASM_Context_Const;
-
 typedef struct PASM_Const PASM_Const;
 typedef struct PASM_Consts PASM_Consts;
-
 typedef struct PASM_Label PASM_Label;
-
 typedef union PASM_Node_As PASM_Node_As;
 typedef enum PASM_Node_Kind PASM_Node_Kind;
 typedef struct PASM_Node PASM_Node;
 typedef struct PASM_Nodes PASM_Nodes;
-
 typedef struct PASM_Lexer PASM_Lexer;
 typedef struct PASM_Parser PASM_Parser;
 
-typedef String_Slices PASM_External_Files;
-
-typedef String_Slices PASM_Strings;
+#define ABS_PATH_LENGTH 1000
+typedef Strings PASM_Used_Files;
+typedef Strings PASM_Super_Files;
 
 typedef struct PASM PASM;
 
@@ -168,19 +168,23 @@ struct PASM_Context {
     size_t count;
 };
 
+
 struct PASM {
     char *filename;
-    
+
     PASM_Tokens tokens;
     PASM_Nodes nodes;
 
     PASM_Lexer lexer;
     PASM_Parser parser;
     
-    PASM_Context context; // the global context of the program
-    
+    PASM_Context context;           // the global context of the program
+
+    PASM_Super_Files sup_files;     // if a file `a` includes a file `b` then the file `a` is a super file of `b`
+    PASM_Used_Files files;          // for the files used in the this current pasm file
+
     PASM_Prog prog;
-    size_t prog_size;     // used for preprocessing
+    size_t prog_size;               // used for preprocessing
 };
 
 

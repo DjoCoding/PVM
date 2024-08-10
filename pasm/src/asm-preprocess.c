@@ -73,12 +73,39 @@ void pasm_add_program(PASM *self, PASM_Prog prog) {
 }
 
 void pasm_process_external_file(PASM *self, PASM_Node node) {
-    // for now i don't check for the circular uses
-
     // get the file name
     char *filename = cstr_from_sv(node.as.file_path);
 
-    PASM pasm = {0};
+
+    // getting the absolute path of the current file
+    char root_file_abs_path[FILENAME_MAX] = {0};    
+    realpath(self->filename, root_file_abs_path);
+
+
+    // getting the abs path the sub file 
+    char sub_file_abs_path[FILENAME_MAX] = {0};
+    if (!realpath(filename, sub_file_abs_path)) {
+        THROW_ERROR("file `%s` included in %s not found", filename, self->filename);
+    }
+
+    // check if the file is already used
+    if (pasm_check_file_included(self, sub_file_abs_path)) {
+        THROW_ERROR("file `%s` used twice in the current file `%s`", filename, self->filename);
+    }
+
+    // check for circular uses
+    if (pasm_has_super_file(self, sub_file_abs_path)) {
+        THROW_ERROR("circular dependency found between `%s` and `%s`", self->filename, filename);
+    }
+
+    PASM pasm = pasm_init(filename);
+
+    // add it to the super files
+    pasm_add_super_file(&pasm, root_file_abs_path);
+    pasm_add_super_files(&pasm, self->sup_files);
+
+    // add it to the sub files
+    pasm_add_sub_file(self, sub_file_abs_path);
 
     compile(&pasm, filename);
 

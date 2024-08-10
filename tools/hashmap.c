@@ -124,3 +124,10 @@ int hashmap_update(HashMap *self, char *key, void *value) {
     memcpy(node->value, value, self->item_size);
     return 1;
 }
+
+int hashmap_empty(HashMap *self) {
+    for (size_t i = 0; i < HASH_MAP_SIZE; ++i) {
+        if (self->nodes[i]) { return 0; }
+    } 
+    return 1;
+}
