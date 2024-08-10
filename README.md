@@ -6,15 +6,20 @@ PACKL Virtual Machine, a simple machine written in C
 Below is a very simple code snippet in pasm (PACKL Assembler) that prints "Hello World" to the screen
 
 ```asm
-#const HELLO "Hello World" end
-#const NEW_LINE 10 end
+; A SIMPLE HELLO WORLD PROGRAM
 
-jmp $main
+#const HELLO "Hello World" end
+
+#println:
+ syscall 0       ; call the write syscall
+ push 10         ; push '\n'
+ putc            ; write the char 
+ ret             ; return to caller 
 
 #main:
-	pushs $HELLO
-	syscall 0
-	push $NEW_LINE
-	putc 
-	halt
+ pushs $HELLO    ; push the constant `HELLO`
+ call $println   ; call `println`
+ halt            ; halt the machine
+
+#entry: $main    ; set `main` as entry point for the program
 ```
