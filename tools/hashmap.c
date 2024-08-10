@@ -94,7 +94,8 @@ int hashmap_add(HashMap *self, char *key, void *value) {
     node->next = self->nodes[index];
     
     if (self->nodes[index]) self->nodes[index]->prev = node;
-    else self->nodes[index] = node;
+    
+    self->nodes[index] = node;
     return 1;
 }
 

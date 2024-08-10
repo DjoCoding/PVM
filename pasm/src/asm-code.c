@@ -31,7 +31,7 @@ void pasm_set_entry_point(PASM *self, PASM_Node node) {
 
 
 void pasm_generate_bytecode(PASM *self) { 
-    if (self->prog.count == 0) { DA_INIT(&self->prog, sizeof(Inst)); }
+    if (self->prog.count == 0) { DA_INIT(&self->prog, sizeof(PASM_Inst)); }
     
     for (size_t i = 0; i < self->nodes.count; ++i) {
         if (self->nodes.items[i].kind == NODE_KIND_INSTRUCTION) {

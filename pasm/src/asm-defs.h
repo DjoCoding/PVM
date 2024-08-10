@@ -170,17 +170,17 @@ struct PASM_Context {
 
 struct PASM {
     char *filename;
-    PASM_Strings strings;
+    
     PASM_Tokens tokens;
     PASM_Nodes nodes;
+
     PASM_Lexer lexer;
     PASM_Parser parser;
-    PASM_External_Files files;
-
-    PASM_Context context;
+    
+    PASM_Context context; // the global context of the program
+    
     PASM_Prog prog;
-
-    size_t prog_size; // used for preprocessing
+    size_t prog_size;     // used for preprocessing
 };
 
 

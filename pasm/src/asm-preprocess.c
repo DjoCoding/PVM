@@ -22,7 +22,7 @@ void pasm_process_consts_node(PASM *self, PASM_Node node) {
 
 void pasm_process_label_node(PASM *self, PASM_Node node) {
     char *label_name = cstr_from_sv(node.as.label);
-    pasm_process_label_parts(self, label_name, self->prog.count);
+    pasm_process_label_parts(self, label_name, self->prog_size);
 }
 
 void pasm_process_context_value(PASM *self, char *name, PASM_Context_Value context_value) {
@@ -51,19 +51,25 @@ void pasm_add_context(PASM *self, PASM_Context context) {
     for (size_t i = 0; i < HASH_MAP_SIZE; ++i) {
         HashMap_Node *node = context.map.nodes[i];
         if (!node) { continue; }
-        pasm_add_to_context(self, node->key, *(PASM_Context_Value *)node->value);
+        while (node) {
+            PASM_Context_Value value = *(PASM_Context_Value *)node->value;
+            pasm_add_to_context(self, node->key, value);
+            node = node->next;
+        }
     }
 }
 
 void pasm_add_program(PASM *self, PASM_Prog prog) {
     if (prog.count == 0) { return; }
-    if (self->prog.size == 0) { DA_INIT(&self->prog, sizeof(Inst)); }
+    if (self->prog.size == 0) { DA_INIT(&self->prog, sizeof(PASM_Inst )); }
     
     for (size_t i = 0; i < prog.count; ++i) {
-        Inst inst = prog.items[i];
+        PASM_Inst  inst = prog.items[i];
         pasm_process_instruction_parts(self, inst.kind, inst.ops);
         DA_APPEND(&self->prog, inst);
     }
+
+    self->prog_size = self->prog.count;
 }
 
 void pasm_process_external_file(PASM *self, PASM_Node node) {
@@ -113,6 +119,9 @@ void pasm_preprocess(PASM *self) {
     for (size_t i = 0; i < self->nodes.count; ++i) {
         if (preprocess_kinds[self->nodes.items[i].kind]) {
             pasm_preprocess_node(self, self->nodes, i);
-        } else { self->prog_size++; }
+            continue;
+        } 
+        
+        if (self->nodes.items[i].kind == NODE_KIND_INSTRUCTION) { self->prog_size++; }
     }
 }

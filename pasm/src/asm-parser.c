@@ -1,15 +1,15 @@
 #include "asm-parser.h"
 
-void inst_begin(Inst *inst) {
+void inst_begin(PASM_Inst *inst) {
     *inst = (Inst) {0};
     DA_INIT(&inst->ops, sizeof(Inst_Op));
 }
 
-void inst_set_kind(Inst *inst, Inst_Kind kind) {
+void inst_set_kind(PASM_Inst *inst, Inst_Kind kind) {
     inst->kind = kind;
 }
 
-void inst_add_operand(Inst *inst, Inst_Op op) {
+void inst_add_operand(PASM_Inst *inst, Inst_Op op) {
     DA_APPEND(&inst->ops, op);
 }
 
