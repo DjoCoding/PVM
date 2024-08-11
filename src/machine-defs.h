@@ -14,8 +14,16 @@ typedef struct Memory_Cell Memory_Cell;
 typedef struct Machine_Memory Machine_Memory;
 typedef struct Machine_Stack Machine_Stack;
 typedef enum Machine_State Machine_State;
+
 typedef struct Machine_SubRoutine_Stack Machine_SubRoutine_Stack;
+typedef enum Program_State Program_State;
+
+typedef struct Program Program;
+
 typedef String_Slices Machine_String_Stack;
+
+typedef struct Machine_Programs Machine_Programs;
+
 typedef struct Machine Machine;
 
 struct Memory_Cell {
@@ -47,12 +55,18 @@ struct Machine_SubRoutine_Stack {
     size_t count;
 };
 
+struct Machine_Programs {
+    Program *items;
+    size_t count;
+    size_t size;
+};
 
 struct Machine {
     Machine_Stack stack;
     Machine_Memory memory;
     Machine_String_Stack str_stack; // will be used to load pre-defined strings from files
     Machine_SubRoutine_Stack subroutines;
+    Machine_Programs progs;
     bool halted;
     size_t ip;
 };
@@ -105,6 +119,7 @@ enum Inst_Kind {
     INST_KIND_PUTC,
     INST_KIND_CALL,
     INST_KIND_RET,
+    INST_KIND_STOP,
     INST_KIND_NO_KIND,
 };
 
@@ -150,12 +165,19 @@ struct Program_Entry {
     bool entry_set;
 };
 
+enum Program_State {
+    PROGRAM_STATE_NOT_EXECUTED_YET,
+    PROGRAM_STATE_PENDING,
+    PROGRAM_STATE_EXECTUED,
+};
+
 struct Program {
     Program_Inst *items;
     size_t count;
     size_t size;
     Program_Entry entry;
+    Program_State state;
+    size_t ret_ip;
 };
-
 
 #endif // MACHINE_DEFINITION_H

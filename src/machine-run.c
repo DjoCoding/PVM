@@ -292,8 +292,13 @@ void handle_ret_inst(Machine *self) {
     self->ip = ip + 1;
 }
 
+void handle_stop_inst(Machine *self) {
+    self->progs.items[self->progs.count - 1].state = PROGRAM_STATE_EXECTUED;
+}
+
 void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
     if (prog_inst.kind == PROGRAM_INST_PROGRAM) {
+        prog_inst.as.prog->ret_ip = self->ip;
         machine_exec_prog(self, *prog_inst.as.prog);
         return;
     }
@@ -374,14 +379,41 @@ void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
         case INST_KIND_RET:
             handle_ret_inst(self);
             break;
+        case INST_KIND_STOP:
+            handle_stop_inst(self);
+            break;
         default:
             ASSERT(false, "unreachable");
     }
 }
 
-void machine_exec_prog(Machine *self, Program prog) {
-    if (prog.count == 0) { return; }
+void machine_push_prog(Machine *self, Program prog) {
+    DA_APPEND(&self->progs, prog);
+}
 
+int machine_end_of_progs(Machine *self) {
+    return (self->progs.count == 0);
+}
+
+void machine_pop_prog(Machine *self) {
+    self->progs.count--;
+}
+
+Program machine_get_current_executing_prog(Machine *self) {
+    return (self->progs.items[self->progs.count - 1]);
+} 
+
+void machine_end_current_prog(Machine *self) {
+    self->progs.items[self->progs.count - 1].state = PROGRAM_STATE_EXECTUED;
+}
+
+void machine_get_back_to_prev_prog(Machine *self) {
+    self->ip = machine_get_current_executing_prog(self).ret_ip + 1;
+    machine_pop_prog(self);
+}
+
+void machine_exec_prog(Machine *self, Program prog) {
+    machine_push_prog(self, prog);
     self->halted = false;
 
     // set the entry point
@@ -389,8 +421,15 @@ void machine_exec_prog(Machine *self, Program prog) {
         self->ip = prog.entry.ip;
     } else { self->ip = 0; }
 
+
+    if (prog.count == 0) { machine_end_current_prog(self); }
+
     while (!self->halted) {
-        if (self->ip >= prog.count) { THROW_ERROR("instruction pointer out of bounds, did you forget to add `halt`?"); }
-        machine_exec_inst(self, prog.items[self->ip]);
+        if (machine_get_current_executing_prog(self).state == PROGRAM_STATE_EXECTUED) {
+            if (machine_end_of_progs(self)) { self->halted = true; break; } 
+            machine_get_back_to_prev_prog(self);
+        } else {
+            machine_exec_inst(self, machine_get_current_executing_prog(self).items[self->ip]);
+        }
     }
-}
+}   

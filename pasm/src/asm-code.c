@@ -1,11 +1,11 @@
 #include "asm-code.h"
 
-Inst generate_ret_instruction() {
-    return (Inst) { .kind = INST_KIND_RET, .ops = {0} };
+Inst generate_stop_instruction() {
+    return (Inst) { .kind = INST_KIND_STOP, .ops = {0} };
 }
 
-void pasm_process_instruction(PASM *self, PASM_Node node) {
-    pasm_process_instruction_parts(self, node.as.inst.as.inst.kind, node.as.inst.as.inst.ops);
+Program_Inst pasm_process_instruction(PASM *self, PASM_Node node) {
+    return pasm_process_instruction_parts(self, node.as.inst.as.inst.kind, node.as.inst.as.inst.ops);
 }
 
 void pasm_set_entry_point(PASM *self, PASM_Prog *prog, PASM_Node node) {
@@ -68,6 +68,17 @@ void pasm_set_the_new_macro_context(PASM *self, char *name, Inst_Ops values, PAS
     self->contexts.items[self->contexts.count - 1] = context;
 }
 
+PASM_Nodes pasm_get_nodes_copy(PASM_Nodes nodes) {
+    PASM_Nodes new_nodes = {0};
+    DA_INIT(&new_nodes, sizeof(PASM_Node));
+
+    for (size_t i = 0; i < nodes.count; ++i) {
+        DA_APPEND(&new_nodes, nodes.items[i]);
+    }
+
+    return new_nodes;
+}
+
 Program_Inst pasm_process_macro_call(PASM *self, PASM_Node node) {
     // add a new context to the self contexts
     // make the mapping between the arguments and the values 
@@ -111,7 +122,7 @@ Program_Inst pasm_process_macro_call(PASM *self, PASM_Node node) {
     PASM_Prog prog = pasm_generate_bytecode(self, context_value.as.macro.block);
 
     // add the ret instruction to the prog
-    DA_APPEND(&prog, ((Program_Inst) { .kind = PROGRAM_INST_INSTRUCTION, .as.inst = generate_ret_instruction() }));
+    DA_APPEND(&prog, ((Program_Inst) { .kind = PROGRAM_INST_INSTRUCTION, .as.inst = generate_stop_instruction() }));
     
     
     PASM_Prog *prog_ptr = malloc(sizeof(PASM_Prog));
@@ -130,8 +141,8 @@ PASM_Prog pasm_generate_bytecode(PASM *self, PASM_Nodes nodes) {
     
     for (size_t i = 0; i < nodes.count; ++i) {
         if (nodes.items[i].kind == NODE_KIND_INSTRUCTION) {
-            pasm_process_instruction(self, nodes.items[i]);
-            DA_APPEND(&prog, nodes.items[i].as.inst);
+            Program_Inst inst = pasm_process_instruction(self, nodes.items[i]);
+            DA_APPEND(&prog, inst);
             continue;
         }
 
