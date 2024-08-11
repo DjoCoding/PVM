@@ -20,9 +20,8 @@ int main(int argc, char **argv) {
     if (!file_path) { usage(program); }
 
     Machine m = machine_init(); 
-    Program prog = load_prog_from_file(&m, file_path);
-    machine_exec_prog(&m, prog);
-    machine_clean(&m);
+
+    (void)m;
     
     return 0;
 }

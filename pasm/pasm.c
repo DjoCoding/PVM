@@ -20,8 +20,9 @@ int main(int argc, char **argv) {
 
     if (!file_path) { usage(program); }
 
-    PASM pasm = {0};
-    compile(&pasm, file_path);
+    PASM pasm = pasm_init(file_path);
+
+    compile(&pasm);
     
     Machine machine = machine_init();
     machine_exec_prog(&machine, pasm.prog);

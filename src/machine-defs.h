@@ -37,8 +37,13 @@ struct Machine_Stack {
 
 #define SUBROUTINE_STACK_CAP 1000
 
+// struct Machine_SubRoutine {
+//     Machine_SubRoutine_Kind kind; // label or macro jump
+//     Machine_SubRoutine_Map map;   // map between the 
+// };
+
 struct Machine_SubRoutine_Stack {
-    size_t items[SUBROUTINE_STACK_CAP];
+    size_t items[SUBROUTINE_STACK_CAP]; 
     size_t count;
 };
 
@@ -53,12 +58,18 @@ struct Machine {
 };
 
 
+typedef enum Inst_Kind Inst_Kind;
 typedef enum Op_Kind Op_Kind;
 typedef struct Inst_Op Inst_Op;
-typedef enum Inst_Kind Inst_Kind;
-typedef struct Inst_Ops Inst_Ops;
+typedef struct Inst_Ops Inst_Ops; 
 typedef struct Inst Inst;
+
+typedef enum Program_Inst_Kind Program_Inst_Kind;
+typedef union Program_Inst_As Program_Inst_As;
+typedef struct Program_Inst Program_Inst;
+
 typedef struct Program_Entry Program_Entry;
+
 typedef struct Program Program;
 
 typedef enum SysCall_ID SysCall_ID;
@@ -119,13 +130,28 @@ struct Inst {
     Inst_Ops ops;
 };
 
+enum Program_Inst_Kind {
+    PROGRAM_INST_INSTRUCTION = 0,
+    PROGRAM_INST_PROGRAM,
+};
+
+union Program_Inst_As {
+    Inst inst;
+    Program *prog;
+};
+
+struct Program_Inst {
+    Program_Inst_Kind kind;
+    Program_Inst_As as;
+};
+
 struct Program_Entry {
     size_t ip;
     bool entry_set;
 };
 
 struct Program {
-    Inst *items;
+    Program_Inst *items;
     size_t count;
     size_t size;
     Program_Entry entry;

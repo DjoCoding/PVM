@@ -11,7 +11,7 @@
 #define gencode pasm_generate_bytecode
 #define compile pasm_compile
 
-void pasm_generate_bytecode(PASM *self);
-void pasm_compile(PASM *self, char *filename);
+PASM_Prog pasm_generate_bytecode(PASM *self, PASM_Nodes nodes);
+void pasm_compile(PASM *self);
 
 #endif // PASM_CODE_H

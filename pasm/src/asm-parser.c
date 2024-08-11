@@ -1,17 +1,19 @@
 #include "asm-parser.h"
 
-void inst_begin(PASM_Inst *inst) {
-    *inst = (Inst) {0};
-    DA_INIT(&inst->ops, sizeof(Inst_Op));
-}
+PASM_Node pasm_parser_parse_statement(PASM *self);
 
-void inst_set_kind(PASM_Inst *inst, Inst_Kind kind) {
-    inst->kind = kind;
-}
+// void inst_begin(PASM_Inst *inst) {
+//     *inst = (Inst) {0};
+//     DA_INIT(&inst->ops, sizeof(Inst_Op));
+// }
 
-void inst_add_operand(PASM_Inst *inst, Inst_Op op) {
-    DA_APPEND(&inst->ops, op);
-}
+// void inst_set_kind(PASM_Inst *inst, Inst_Kind kind) {
+//     inst->kind = kind;
+// }
+
+// void inst_add_operand(PASM_Inst *inst, Inst_Op op) {
+//     DA_APPEND(&inst->ops, op);
+// }
 
 PASM_Token pasm_parser_peek(PASM *self) {
     return self->tokens.items[self->parser.current];
@@ -122,7 +124,7 @@ Inst_Ops pasm_parser_parse_operands(PASM *self) {
 PASM_Node pasm_parser_parse_instruction(PASM *self, Inst_Kind kind) {
     if (peol(self)) { THROW_ERROR("expected an instruction but end of line found"); }
 
-    PASM_Inst inst = {0};
+    Inst inst = {0};
     inst.kind = kind;
 
     // consuming the instruction
@@ -131,7 +133,7 @@ PASM_Node pasm_parser_parse_instruction(PASM *self, Inst_Kind kind) {
     Inst_Ops ops = pasm_parser_parse_operands(self);
     inst.ops = ops;
 
-    return (PASM_Node) { .kind = NODE_KIND_INSTRUCTION, .as.inst = inst };
+    return (PASM_Node) { .kind = NODE_KIND_INSTRUCTION, .as.inst = (Program_Inst) { .kind = PROGRAM_INST_INSTRUCTION, .as.inst = inst } };
 }
 
 PASM_Const pasm_parser_parse_const(PASM *self) {
@@ -152,9 +154,9 @@ PASM_Const pasm_parser_parse_const(PASM *self) {
     token = ppeek(self);
     node.value = token.text;
 
-    if (token.kind == TOKEN_KIND_STRING) { node.kind = TYPE_STRING; }
-    else if (token.kind == TOKEN_KIND_NUMBER) { node.kind = TYPE_NUMBER; } 
-    else if (token.kind == TOKEN_KIND_CHAR) { node.kind = TYPE_CHAR; }
+    if (token.kind == TOKEN_KIND_STRING) { node.type = TYPE_STRING; }
+    else if (token.kind == TOKEN_KIND_NUMBER) { node.type = TYPE_NUMBER; } 
+    else if (token.kind == TOKEN_KIND_CHAR) { node.type = TYPE_CHAR; }
     else { THROW_ERROR("expected a value for the constant `" SV_FMT "` but %s found", SV_UNWRAP(node.name), token_kind_to_cstr(token.kind)); }
 
     // consuming the constant value
@@ -263,6 +265,82 @@ PASM_Node pasm_parser_parse_use(PASM *self) {
     return (PASM_Node) {  .kind = NODE_KIND_USE, .as.file_path = token.text };
 }
 
+String_Slices pasm_parse_macro_args(PASM *self) {
+    if (peol(self)) { THROW_ERROR("expected macro arguments but end of line found"); }
+
+    String_Slices op_names = {0};
+    DA_INIT(&op_names, sizeof(String_View));
+
+    while (!peol(self)) { 
+        PASM_Token token = ppeek(self);
+        if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected a macro argument of type id but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
+        if (sv_eq(token.text, SV("end"))) { break; }        
+        DA_APPEND(&op_names, token.text);
+        padv(self);
+    }
+
+    if (peol(self)) { THROW_ERROR("expected the `end` keyword but end of line found"); }
+    
+    // consume the `end` keyword
+    padv(self);
+
+    return op_names;
+}
+
+PASM_Nodes pasm_parse_macro_block(PASM *self, String_View macro_name) {
+    // read tokens and parse them until we hit the end token
+    PASM_Nodes block = {0};
+    DA_INIT(&block, sizeof(PASM_Node));
+
+    while (!peot(self)) {
+        PASM_Token current = ppeek(self);
+
+        if (current.kind == TOKEN_KIND_NEW_LINE) { padv(self); continue; }
+        if (sv_eq(current.text, SV("end"))) { break; }
+        
+        PASM_Node node = pasm_parser_parse_statement(self);
+        DA_APPEND(&block, node);
+    }
+
+    if (peot(self)) { THROW_ERROR("expected the `end` keyword in the macro `" SV_FMT "` definition", SV_UNWRAP(macro_name)); }
+
+    // we consume the `end` keyword
+    padv(self);
+
+    return block;
+}
+
+PASM_Node pasm_parser_parse_macro_def(PASM *self) {
+    if (peol(self)) { THROW_ERROR("expected macro defintion but end of line found"); }
+
+    PASM_Token token = ppeek(self);
+    if (token.kind != TOKEN_KIND_PREPROCESS) { THROW_ERROR("expected the macro defintion but else found"); }
+
+    padv(self);
+
+    if (peol(self)) { THROW_ERROR("expected the macro name but end of line found"); }
+    
+
+    token = ppeek(self);
+    if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected macro name but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
+
+    PASM_Macro_Def macro = {0};
+    macro.name = token.text;
+
+    // consuming the `name` token
+    padv(self);
+
+    // parsing the macro operands
+    macro.arg_names = pasm_parse_macro_args(self);
+
+    // parsing the macro instructions
+    PASM_Nodes block = pasm_parse_macro_block(self, macro.name); 
+    macro.block = malloc(sizeof(PASM_Nodes));
+    *macro.block = block;
+
+    return (PASM_Node) {  .kind = NODE_KIND_MACRO, .as.macro_def = macro };
+}
+
 PASM_Node pasm_parser_parse_preprocess_statement(PASM *self) {
     PASM_Token token = ppeek(self);
     
@@ -278,10 +356,28 @@ PASM_Node pasm_parser_parse_preprocess_statement(PASM *self) {
         return pasm_parser_parse_use(self);
     }
 
+    if (sv_eq(token.text, SV("macro"))) {
+        return pasm_parser_parse_macro_def(self);
+    }
+
     // it should be a label defintion
     return pasm_parser_parse_label_definition(self);
 }
 
+PASM_Node pasm_parser_parse_macro_call(PASM *self) {
+    if (peol(self)) { THROW_ERROR("expected macro defintion but end of line found"); }
+
+    PASM_Token token = ppeek(self);
+    if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected the macro name but else found"); }
+    padv(self);
+
+    PASM_Macro_Call call = {0};
+    call.name = token.text;
+
+    call.args = pasm_parser_parse_operands(self);
+
+    return (PASM_Node) { .kind = NODE_KIND_MACRO_CALL, .as.macro_call = call };
+}
 
 PASM_Node pasm_parser_parse_statement(PASM *self) {
     PASM_Token token = ppeek(self);
@@ -292,7 +388,8 @@ PASM_Node pasm_parser_parse_statement(PASM *self) {
     Inst_Kind kind = 0;
     if (is_instruction(token.text, &kind)) { return pasm_parser_parse_instruction(self, kind); }
 
-    THROW_ERROR("invalid instruction found: `" SV_FMT "`", SV_UNWRAP(token.text));
+    // it should be a macro call
+    return pasm_parser_parse_macro_call(self);
 }
 
 void pasm_parser_parse(PASM *self) {

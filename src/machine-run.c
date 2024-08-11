@@ -292,7 +292,14 @@ void handle_ret_inst(Machine *self) {
     self->ip = ip + 1;
 }
 
-void machine_exec_inst(Machine *self, Inst inst) {
+void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
+    if (prog_inst.kind == PROGRAM_INST_PROGRAM) {
+        machine_exec_prog(self, *prog_inst.as.prog);
+        return;
+    }
+
+    Inst inst = prog_inst.as.inst;
+
     switch(inst.kind) {
         case INST_KIND_NOP:
             handle_nop_inst(self);

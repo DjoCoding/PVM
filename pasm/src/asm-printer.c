@@ -106,7 +106,7 @@ void pasm_print_inst(Inst inst) {
 }
 
 void pasm_print_const(PASM_Const c) {
-    printf("type: %s ", type_to_string(c.kind));
+    printf("type: %s ", type_to_string(c.type));
     printf(SV_FMT, SV_UNWRAP(c.value));
 } 
 
@@ -120,7 +120,7 @@ void pasm_print_node(PASM_Node node) {
     printf("node kind: %s:\n", node_kind_to_cstr(node.kind));
     printf("\t");
 
-    if (node.kind == NODE_KIND_INSTRUCTION) { pasm_print_inst(node.as.inst); }
+    if (node.kind == NODE_KIND_INSTRUCTION) { pasm_print_inst(node.as.inst.as.inst); }
     else if (node.kind == NODE_KIND_CONST_DEF) { pasm_print_consts(node.as.constants); }
     else if (node.kind == NODE_KIND_LABEL_DEF) { printf(SV_FMT, SV_UNWRAP(node.as.label)); }
     else if (node.kind == NODE_KIND_ENTRY) { printf("entry: `" SV_FMT "`", SV_UNWRAP(node.as.label)); }
