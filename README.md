@@ -8,18 +8,14 @@ Below is a very simple code snippet in pasm (PACKL Assembler) that prints "Hello
 ```asm
 ; A SIMPLE HELLO WORLD PROGRAM
 
-#const HELLO "Hello World" end
+#use "std.pasm"  ; import the standard pasm library 
 
-#println:
- syscall 0       ; call the write syscall
- push 10         ; push '\n'
- putc            ; write the char 
- ret             ; return to caller 
+#const HELLO "Hello World" end
 
 #main:
  pushs $HELLO    ; push the constant `HELLO`
- call $println   ; call `println`
- halt            ; halt the machine
+ call $println   ; call `println` subroutine defined in "std.pasm"
+ ret             ; return to OS
 
 #entry: $main    ; set `main` as entry point for the program
 ```
