@@ -175,9 +175,12 @@ struct Program {
     Program_Inst *items;
     size_t count;
     size_t size;
+
     Program_Entry entry;
     Program_State state;
+
     size_t ret_ip;
+    size_t prog_size; // use to determine the number of instructions in the program for marking the labels -- this concerns PASM more
 };
 
 #endif // MACHINE_DEFINITION_H

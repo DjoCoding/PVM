@@ -96,7 +96,10 @@ PASM_Prog *pasm_process_macro_call(PASM *self, PASM_Node node) {
     pasm_set_the_new_macro_context(self, name, args, context_value.as.macro.args);
 
     // pre process the macro (search for constant and labels declarations and evaluate them)
+    size_t prog_size = self->prog_size;
+    self->prog_size = 0; // for starting a new program // that's for marking the labels
     pasm_preprocess(self, context_value.as.macro.block);
+    self->prog_size = prog_size; // getting back our prog size
 
     // replace all the identifiers with their actual values in the macro block    
     macro_block = pasm_process_block(self, macro_block);
