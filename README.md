@@ -8,7 +8,7 @@ Below is a very simple code snippet in pasm (PACKL Assembler) that prints "Hello
 ```asm
 ; A SIMPLE HELLO WORLD PROGRAM
 
-#use "std.pasm"  ; importing a library in PASM, it contains the `print` macro
+#use "std.pasm"  ; importing a library in PASM, it contains the `println` macro
 
 #const HELLO_WORLD "Hello World" end ; defintion of a constant in PASM
 
