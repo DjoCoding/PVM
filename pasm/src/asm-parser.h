@@ -4,6 +4,7 @@
 #include "asm-defs.h"
 #include "asm-printer.h"
 #include "asm-clean.h"
+#include "asm-error.h"
 #include "asm-code-processor.h"
 
 #define MAKE_STRING_OPERAND(s)           ((Inst_Op) { .kind = OP_KIND_STRING,  .value = (int64_t)(s)  })
@@ -14,6 +15,7 @@
 #define padv  pasm_parser_advance
 #define peot  pasm_parser_eot
 #define peol  pasm_parser_eol
+#define pbef  pasm_parser_get_last_token
 #define parse pasm_parser_parse
 
 void pasm_parser_parse(PASM *self);

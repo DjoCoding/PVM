@@ -3,6 +3,7 @@
 
 #include "asm-defs.h"
 #include "asm-clean.h"
+#include "asm-error.h"
 #include <ctype.h>
 
 #define lpeek    pasm_lexer_peek

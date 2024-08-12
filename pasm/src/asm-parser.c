@@ -10,6 +10,10 @@ void pasm_parser_advance(PASM *self) {
     self->parser.current++;
 }
 
+PASM_Token pasm_parser_get_last_token(PASM *self) {
+    return self->tokens.items[self->parser.current - 1];
+}
+
 // end of tokens
 int pasm_parser_eot(PASM *self) {
     return self->parser.current >= self->tokens.count;
@@ -66,7 +70,9 @@ bool is_instruction(String_View s, Inst_Kind *kind) {
 }
 
 Inst_Op pasm_parser_parse_operand(PASM *self) {
-    if (peol(self)) { THROW_ERROR("expected an instruction operand but end of line found"); }
+    if (peol(self)) { 
+        PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected an instruction operand but end of line found"); 
+    }
 
     Inst_Op op = {0};
     PASM_Token token = ppeek(self);
@@ -80,7 +86,7 @@ Inst_Op pasm_parser_parse_operand(PASM *self) {
 
     if (token.kind == TOKEN_KIND_NUMBER) {
         op.kind = OP_KIND_NUMBER;
-        if (!sv_parse_integer(token.text, &op.value)) { THROW_ERROR("could not parse `" SV_FMT "` as an integer", SV_UNWRAP(token.text)); }
+        if (!sv_parse_integer(token.text, &op.value)) { PASM_ERROR_LOC(self->filename, token.loc, "could not parse `" SV_FMT "` as an integer", SV_UNWRAP(token.text)); }
         padv(self);
         return op;
     }
@@ -110,7 +116,9 @@ Inst_Ops pasm_parser_parse_operands(PASM *self) {
 }
 
 PASM_Node pasm_parser_parse_instruction(PASM *self, Inst_Kind kind) {
-    if (peol(self)) { THROW_ERROR("expected an instruction but end of line found"); }
+    if (peol(self)) { 
+        PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected an instruction but end of line found"); 
+    }
 
     Inst inst = {0};
     inst.kind = kind;
@@ -125,11 +133,13 @@ PASM_Node pasm_parser_parse_instruction(PASM *self, Inst_Kind kind) {
 }
 
 PASM_Const pasm_parser_parse_const(PASM *self) {
-    if (peol(self)) { THROW_ERROR("expected constant identifier but end of line found"); }
+    if (peol(self)) { 
+        PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected constant identifier but end of line found");
+    }
 
     PASM_Token token = ppeek(self);
 
-    if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected constant identifier but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
+    if (token.kind != TOKEN_KIND_ID) { PASM_ERROR_LOC(self->filename, token.loc, "expected constant identifier but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
 
     PASM_Const node = {0};
     node.name = token.text;
@@ -137,7 +147,7 @@ PASM_Const pasm_parser_parse_const(PASM *self) {
     // consuming the constant identifier
     padv(self);
 
-    if (peol(self)) { THROW_ERROR("expected a value for the constant `" SV_FMT "` but end of line found", SV_UNWRAP(node.name)); }
+    if (peol(self)) { PASM_ERROR_LINE(self->filename, token.loc.line, "expected a value for the constant `" SV_FMT "` but end of line found", SV_UNWRAP(node.name)); }
     
     token = ppeek(self);
     node.value = token.text;
@@ -145,7 +155,7 @@ PASM_Const pasm_parser_parse_const(PASM *self) {
     if (token.kind == TOKEN_KIND_STRING) { node.type = TYPE_STRING; }
     else if (token.kind == TOKEN_KIND_NUMBER) { node.type = TYPE_NUMBER; } 
     else if (token.kind == TOKEN_KIND_CHAR) { node.type = TYPE_CHAR; }
-    else { THROW_ERROR("expected a value for the constant `" SV_FMT "` but %s found", SV_UNWRAP(node.name), token_kind_to_cstr(token.kind)); }
+    else { PASM_ERROR_LOC(self->filename, token.loc, "expected a value for the constant `" SV_FMT "` but %s found", SV_UNWRAP(node.name), token_kind_to_cstr(token.kind)); }
 
     // consuming the constant value
     padv(self);
@@ -154,12 +164,14 @@ PASM_Const pasm_parser_parse_const(PASM *self) {
 }
 
 PASM_Node pasm_parser_parse_const_declaration(PASM *self) {
-    if (peol(self)) { THROW_ERROR("expected the `const` keyword but end of line found"); }
+    if (peol(self)) { 
+        PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected the `const` keyword but end of line found");
+    }
 
     PASM_Token token = ppeek(self);
-    if (token.kind != TOKEN_KIND_PREPROCESS) { THROW_ERROR("expected a constants declaration but else found"); }
+    if (token.kind != TOKEN_KIND_PREPROCESS) { PASM_ERROR_LOC(self->filename, token.loc, "expected a constants declaration but else found"); }
 
-    if (!sv_eq(token.text, SV("const"))) { THROW_ERROR("expected `const` keyword but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
+    if (!sv_eq(token.text, SV("const"))) { PASM_ERROR_LOC(self->filename, token.loc, "expected `const` keyword but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
 
     PASM_Consts consts = {0};
     DA_INIT(&consts, sizeof(PASM_Const));
@@ -169,12 +181,15 @@ PASM_Node pasm_parser_parse_const_declaration(PASM *self) {
 
     while (true) {
         PASM_Const node = pasm_parser_parse_const(self);
-        if (peol(self)) { THROW_ERROR("expected the keyword `end` but end of line found"); }
+        
+        if (peol(self)) { 
+            PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected the keyword `end` but end of line found");
+        }
         
         token = ppeek(self);
         
         if (token.kind == TOKEN_KIND_ID) {
-            if (!sv_eq(token.text, SV("end"))) { THROW_ERROR("expected the keyword `end` but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
+            if (!sv_eq(token.text, SV("end"))) { PASM_ERROR_LOC(self->filename, token.loc, "expected the keyword `end` but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
             DA_APPEND(&consts, node);
             padv(self);
             break;
@@ -191,16 +206,22 @@ PASM_Node pasm_parser_parse_const_declaration(PASM *self) {
 
 PASM_Node pasm_parser_parse_label_definition(PASM *self) {
     // a label defintion is defined by `:` after its name
-    if (peol(self)) { THROW_ERROR("expected a label definition but end of line found"); }
+
+    if (peol(self)) { 
+        PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected a label definition but end of line found");
+    }
 
     PASM_Token token = ppeek(self);
-    if (token.kind != TOKEN_KIND_PREPROCESS) { THROW_ERROR("expected a label defintion but else found"); }
+    if (token.kind != TOKEN_KIND_PREPROCESS) { PASM_ERROR_LOC(self->filename, token.loc, "expected a label defintion but else found"); }
 
     // consuming the label identifier
     padv(self);
 
-    if (peol(self)) { THROW_ERROR("expected a `:` for the label definition but end of line found"); }
-    if (ppeek(self).kind != TOKEN_KIND_COLON) { THROW_ERROR("expected a `:` for the label defintion but `" SV_FMT "` found", SV_UNWRAP(ppeek(self).text)); }
+    if (peol(self)) { 
+        PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected a `:` for the label definition but end of line found");
+    }
+    
+    if (ppeek(self).kind != TOKEN_KIND_COLON) { PASM_ERROR_LOC(self->filename, ppeek(self).loc, "expected a `:` for the label defintion but `" SV_FMT "` found", SV_UNWRAP(ppeek(self).text)); }
 
     // consuming the `:` token 
     padv(self);
@@ -211,21 +232,23 @@ PASM_Node pasm_parser_parse_label_definition(PASM *self) {
 }
 
 PASM_Node pasm_parser_parse_entry(PASM *self) {
-    if (peol(self)) { THROW_ERROR("expected entry defintion but end of line found"); }
+    if (peol(self)) { 
+        PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected entry defintion but end of line found");
+    }
 
     PASM_Token token = ppeek(self);
-    if (token.kind != TOKEN_KIND_PREPROCESS) { THROW_ERROR("expected the entry defintion but else found"); }
+    if (token.kind != TOKEN_KIND_PREPROCESS) { PASM_ERROR_LOC(self->filename, token.loc, "expected the entry defintion but else found"); }
 
     padv(self);
 
-    if (peol(self)) { THROW_ERROR("expected a `:` for the label definition but end of line found"); }
-    if (ppeek(self).kind != TOKEN_KIND_COLON) { THROW_ERROR("expected a `:` for the label defintion but `" SV_FMT "` found", SV_UNWRAP(ppeek(self).text)); }
+    if (peol(self)) { PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected a `:` for the label definition but end of line found"); }
+    if (ppeek(self).kind != TOKEN_KIND_COLON) { PASM_ERROR_LOC(self->filename, ppeek(self).loc, "expected a `:` for the label defintion but `" SV_FMT "` found", SV_UNWRAP(ppeek(self).text)); }
 
     // consuming the `:` token 
     padv(self);
 
     token = ppeek(self);
-    if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected the entry point label argument but else found"); }
+    if (token.kind != TOKEN_KIND_ID) { PASM_ERROR_LOC(self->filename, token.loc, "expected the entry point label argument but else found"); }
 
     String_View label_name = token.text;
 
@@ -235,17 +258,17 @@ PASM_Node pasm_parser_parse_entry(PASM *self) {
 }
 
 PASM_Node pasm_parser_parse_use(PASM *self) {
-    if (peol(self)) { THROW_ERROR("expected use statement but end of line found"); }
+    if (peol(self)) { PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected use statement but end of line found"); }
 
     PASM_Token token = ppeek(self);
-    if (token.kind != TOKEN_KIND_PREPROCESS) { THROW_ERROR("expected the use statement but else found"); }
+    if (token.kind != TOKEN_KIND_PREPROCESS) { PASM_ERROR_LOC(self->filename, token.loc, "expected the use statement but else found"); }
 
     padv(self);
 
-    if (peol(self)) { THROW_ERROR("expected a path to external file but end of line found"); }
+    if (peol(self)) { PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected a path to external file but end of line found"); }
     
     token = ppeek(self);
-    if (token.kind != TOKEN_KIND_STRING) { THROW_ERROR("expected path to file for the use statement but `" SV_FMT "` found", SV_UNWRAP(ppeek(self).text)); }
+    if (token.kind != TOKEN_KIND_STRING) { PASM_ERROR_LOC(self->filename, token.loc, "expected path to file for the use statement but `" SV_FMT "` found", SV_UNWRAP(ppeek(self).text)); }
 
     // consuming the file path token 
     padv(self);
@@ -254,20 +277,20 @@ PASM_Node pasm_parser_parse_use(PASM *self) {
 }
 
 String_Slices pasm_parse_macro_args(PASM *self) {
-    if (peol(self)) { THROW_ERROR("expected macro arguments but end of line found"); }
+    if (peol(self)) { PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected macro arguments but end of line found"); }
 
     String_Slices op_names = {0};
     DA_INIT(&op_names, sizeof(String_View));
 
     while (!peol(self)) { 
         PASM_Token token = ppeek(self);
-        if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected a macro argument of type id but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
+        if (token.kind != TOKEN_KIND_ID) { PASM_ERROR_LOC(self->filename, token.loc, "expected a macro argument of type id but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
         if (sv_eq(token.text, SV("end"))) { break; }        
         DA_APPEND(&op_names, token.text);
         padv(self);
     }
 
-    if (peol(self)) { THROW_ERROR("expected the `end` keyword but end of line found"); }
+    if (peol(self)) { PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected the `end` keyword but end of line found"); }
     
     // consume the `end` keyword
     padv(self);
@@ -290,7 +313,7 @@ PASM_Nodes pasm_parse_macro_block(PASM *self, String_View macro_name) {
         DA_APPEND(&block, node);
     }
 
-    if (peot(self)) { THROW_ERROR("expected the `end` keyword in the macro `" SV_FMT "` definition", SV_UNWRAP(macro_name)); }
+    if (peot(self)) { PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected the `end` keyword in the macro `" SV_FMT "` definition", SV_UNWRAP(macro_name)); }
 
     // we consume the `end` keyword
     padv(self);
@@ -299,18 +322,18 @@ PASM_Nodes pasm_parse_macro_block(PASM *self, String_View macro_name) {
 }
 
 PASM_Node pasm_parser_parse_macro_def(PASM *self) {
-    if (peol(self)) { THROW_ERROR("expected macro defintion but end of line found"); }
+    if (peol(self)) { PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected macro defintion but end of line found"); }
 
     PASM_Token token = ppeek(self);
-    if (token.kind != TOKEN_KIND_PREPROCESS) { THROW_ERROR("expected the macro defintion but else found"); }
+    if (token.kind != TOKEN_KIND_PREPROCESS) { PASM_ERROR_LOC(self->filename, token.loc, "expected the macro defintion but else found"); }
 
     padv(self);
 
-    if (peol(self)) { THROW_ERROR("expected the macro name but end of line found"); }
+    if (peol(self)) { PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected the macro name but end of line found"); }
     
 
     token = ppeek(self);
-    if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected macro name but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
+    if (token.kind != TOKEN_KIND_ID) { PASM_ERROR_LOC(self->filename, token.loc, "expected macro name but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
 
     PASM_Macro_Def macro = {0};
     macro.name = token.text;
@@ -353,10 +376,10 @@ PASM_Node pasm_parser_parse_preprocess_statement(PASM *self) {
 }
 
 PASM_Node pasm_parser_parse_macro_call(PASM *self) {
-    if (peol(self)) { THROW_ERROR("expected macro defintion but end of line found"); }
+    if (peol(self)) { PASM_ERROR_LINE(self->filename, pbef(self).loc.line, "expected macro defintion but end of line found"); }
 
     PASM_Token token = ppeek(self);
-    if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected the macro name but else found"); }
+    if (token.kind != TOKEN_KIND_ID) { PASM_ERROR_LOC(self->filename, token.loc, "expected the macro name but else found"); }
     padv(self);
 
     PASM_Macro_Call call = {0};
@@ -371,7 +394,7 @@ PASM_Node pasm_parser_parse_statement(PASM *self) {
     PASM_Token token = ppeek(self);
 
     if (token.kind == TOKEN_KIND_PREPROCESS) { return pasm_parser_parse_preprocess_statement(self); }
-    if (token.kind != TOKEN_KIND_ID) { THROW_ERROR("expected token of type `instruction` or `preprocess` but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
+    if (token.kind != TOKEN_KIND_ID) { PASM_ERROR_LOC(self->filename, token.loc, "expected token of type `instruction` or `preprocess` but `" SV_FMT "` found", SV_UNWRAP(token.text)); }
 
     Inst_Kind kind = 0;
     if (is_instruction(token.text, &kind)) { return pasm_parser_parse_instruction(self, kind); }

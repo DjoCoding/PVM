@@ -33,8 +33,14 @@ static PASM_Token pasm_lexer_lex_string(PASM *self) {
 
     while (!leof(self)) {
         current = lpeek(self);
-        if (current == '\n') { THROW_ERROR("string `" SV_FMT "...` contains a new line char", SV_UNWRAP(SV_GET(begin, size))); }
+        
+        if (current == '\n') { 
+            Location loc = { token.loc.line, token.loc.col + size };
+            PASM_ERROR_LOC(self->filename, loc, "string `" SV_FMT "...` contains a new line char, did you mean `\\n`", SV_UNWRAP(SV_GET(begin, size))); 
+        }
+
         ladvance(self);
+
         if (current == '"') { break; }
         size++;
     }
@@ -42,9 +48,7 @@ static PASM_Token pasm_lexer_lex_string(PASM *self) {
     if (current != '"') {
         String_View org = SV_GET(begin, size);
         String_View unescape = unescape_string_to_sv(org);
-        THROW_ERROR(LOC_FMT ": failed to parse the string \"" SV_FMT "\"\n", LOC_UNWRAP(token.loc), SV_UNWRAP(unescape));
-        free(unescape.content);
-        return token;
+        PASM_ERROR_LOC(self->filename, token.loc, "failed to parse the string \"" SV_FMT "\"", SV_UNWRAP(unescape));
     }
 
     token.kind = TOKEN_KIND_STRING;
@@ -158,7 +162,7 @@ static PASM_Token pasm_lexer_read_token(PASM *self) {
         TODO("add chars to the lexer");
     }
 
-    THROW_ERROR(LOC_FMT ": failed to identify the char `%c`\n", LOC_UNWRAP(token.loc), current);
+    PASM_ERROR_LOC(self->filename, self->lexer.loc, "failed to identify the char `%c`", current);
 }
 
 void pasm_lexer_skip_comment(PASM *self) {
