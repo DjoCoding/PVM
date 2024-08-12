@@ -29,14 +29,17 @@ void handle_pushs_inst(Machine *self, Inst inst) {
     if (op.kind != OP_KIND_STRING) { THROW_ERROR("`push_str` instruction accepts a string as an operand"); }
 
     char *string = (char *)op.value;
-    
-    String_View view = SV(string);
-    size_t index = self->str_stack.count;
+    size_t str_size = strlen(string);
+    size_t mem_index = alloc(self, str_size);
+    memcpy(&self->memory.items[mem_index].data, string, str_size);
 
-    DA_APPEND(&self->str_stack, view);
+    // DA_APPEND(&self->str_stack, view);
+
+    // push a pointer to the string
+    push(self, (int64_t)self->memory.items[mem_index].data);
 
     // pushing the index of the string in the string stack
-    push(self, index);
+    // push(self, index);
     self->ip++;
 }
 
@@ -133,12 +136,14 @@ void handle_indup_inst(Machine *self, Inst inst) {
 
 void handle_write_syscall(Machine *self) {
     int64_t top = pop(self);
-    size_t pos = (size_t)top;
+    char *ptr = (char *)top;
     
-    if (pos >= self->str_stack.count) { THROW_ERROR("invalid memory region accessed"); }
+    // if (pos >= self->str_stack.count) { THROW_ERROR("invalid memory region accessed"); }
 
-    String_View string = self->str_stack.items[pos];
-    printf(SV_FMT, SV_UNWRAP(string));
+    // String_View string = self->str_stack.items[pos];
+
+    // printf(SV_FMT, SV_UNWRAP(string));
+    printf("%s", ptr);
 }
 
 void handle_read_syscall(Machine *self) {
@@ -150,11 +155,26 @@ void handle_read_syscall(Machine *self) {
     size_t size = (size_t)top;
 
     size_t index = alloc(self, size);
+
     for (size_t i = 0; i < size; ++i) {
         char c = getchar();
         self->memory.items[index].data[i] = c == '\n' ? 0 : c;
     }
-    push(self, index);
+
+    push(self, (int64_t)self->memory.items[index].data);
+}
+
+void handle_alloc_syscall(Machine *self) {
+    int64_t top = pop(self);
+    size_t size = (size_t)top;
+    size_t cell_index = alloc(self, size);
+    push(self, (int64_t)self->memory.items[cell_index].data);
+}
+
+void handle_free_syscall(Machine *self) {
+    int64_t top = pop(self);
+    void *ptr = (void *)top;
+    free(ptr);
 }
 
 void handle_syscall(Machine *self, Inst inst) {
@@ -165,12 +185,18 @@ void handle_syscall(Machine *self, Inst inst) {
     Inst_Op op = inst.ops.items[0];
     if (op.kind != OP_KIND_NUMBER) { THROW_ERROR("`syscall` instruction accepts a number as an operand"); }
 
-    switch((SysCall_ID) op.kind) {
+    switch((SysCall_ID) op.value) {
         case SYSCALL_WRITE:
             handle_write_syscall(self);
             break;
         case SYSCALL_READ:
             handle_read_syscall(self);
+            break;
+        case SYSCALL_ALLOC:
+            handle_alloc_syscall(self);
+            break;
+        case SYSCALL_FREE:
+            handle_free_syscall(self);
             break;
         default:
             ASSERT(false, "unreachable");
@@ -296,6 +322,33 @@ void handle_stop_inst(Machine *self) {
     self->progs.items[self->progs.count - 1].state = PROGRAM_STATE_EXECTUED;
 }
 
+void handle_smem_inst(Machine *self) {
+    // how much data you wanna write : size 
+    // what is this data : data
+    // where to write : ptr
+    
+    size_t size = (size_t)pop(self); 
+    int64_t data = pop(self);
+    void *ptr = (void *)pop(self);
+
+    memcpy(ptr, &data, size);
+    self->ip++;
+}
+
+void handle_gmem_inst(Machine *self) {
+    // how much data you wanna read : size 
+    // where to read : ptr
+
+    size_t size = (size_t)pop(self);
+    void *ptr = (void *)pop(self);
+
+    int64_t data = 0;
+    memcpy(&data, ptr, size);
+    push(self, data);
+
+    self->ip++;
+}
+
 void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
     if (prog_inst.kind == PROGRAM_INST_PROGRAM) {
         prog_inst.as.prog->ret_ip = self->ip;
@@ -381,6 +434,12 @@ void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
             break;
         case INST_KIND_STOP:
             handle_stop_inst(self);
+            break;
+        case INST_KIND_SMEM:
+            handle_smem_inst(self);
+            break;
+        case INST_KIND_GMEM:
+            handle_gmem_inst(self);
             break;
         default:
             ASSERT(false, "unreachable");

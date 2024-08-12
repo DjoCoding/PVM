@@ -91,6 +91,8 @@ typedef enum SysCall_ID SysCall_ID;
 enum SysCall_ID {
     SYSCALL_WRITE = 0,
     SYSCALL_READ,
+    SYSCALL_ALLOC,
+    SYSCALL_FREE,
 };
 
 enum Inst_Kind {
@@ -120,6 +122,8 @@ enum Inst_Kind {
     INST_KIND_CALL,
     INST_KIND_RET,
     INST_KIND_STOP,
+    INST_KIND_SMEM,
+    INST_KIND_GMEM,
     INST_KIND_NO_KIND,
 };
 

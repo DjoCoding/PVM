@@ -55,6 +55,8 @@ bool is_instruction(String_View s, Inst_Kind *kind) {
         "call",
         "ret",
         "stop",
+        "smem",
+        "gmem"
     };
 
     size_t inst_size = sizeof(instructions)/sizeof(instructions[0]);
@@ -100,7 +102,9 @@ Inst_Op pasm_parser_parse_operand(PASM *self) {
 
     if (token.kind == TOKEN_KIND_CHAR) {
         op.kind = OP_KIND_NUMBER;
-        op.value = (int64_t)(cstr_from_sv(token.text)[0]);
+        char *s = sv_escape(token.text);
+        printf("---------------- %s ------------ ", s);
+        op.value = (int64_t)(s[0]);
         padv(self);
         return op;
     }
