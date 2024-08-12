@@ -98,6 +98,13 @@ Inst_Op pasm_parser_parse_operand(PASM *self) {
         return op;
     }
 
+    if (token.kind == TOKEN_KIND_CHAR) {
+        op.kind = OP_KIND_NUMBER;
+        op.value = (int64_t)(cstr_from_sv(token.text)[0]);
+        padv(self);
+        return op;
+    }
+
     TODO("add support for more operand types");
 }
 

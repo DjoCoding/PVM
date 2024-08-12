@@ -105,6 +105,51 @@ static PASM_Token pasm_lexer_lex_number(PASM *self) {
     ASSERT(false, "could not parse this, this isn't an id");
 }
 
+static PASM_Token pasm_lexer_lex_char(PASM *self) {
+    PASM_Token token = {0};
+    token.loc = self->lexer.loc;
+
+    char *begin = &self->lexer.source.content[self->lexer.current];
+    size_t size = 0;
+
+    // consuming the `'` char
+    ladvance(self); 
+
+    // we want the char only without quotes
+    begin++;
+    
+    char current = 0; // added for checks later
+
+    while (!leof(self)) {
+        current = lpeek(self);
+        
+        if (current == '\n') { 
+            Location loc = { token.loc.line, token.loc.col + size };
+            PASM_ERROR_LOC(self->filename, loc, "char contains a new line char, did you mean `\\n`"); 
+        }
+
+        ladvance(self);
+
+        if (current == '\'') { break; }
+        size++;
+    }
+
+    String_View org = SV_GET(begin, size);
+    if (current != '\'') {
+        PASM_ERROR_LOC(self->filename, token.loc, "failed to parse the char \"" SV_FMT "\"", SV_UNWRAP(org));
+    }
+
+    String_View unescaped = unescape_string_to_sv(org);
+    if (unescaped.count > 1) { 
+        PASM_ERROR_LOC(self->filename, token.loc, "expected a char but got a string \"" SV_FMT "\"", SV_UNWRAP(org));
+    }
+
+    token.kind = TOKEN_KIND_CHAR;
+    token.text = org;
+
+    return token;
+}
+
 static PASM_Token pasm_lexer_read_token(PASM *self) {
     PASM_Token token = {0};
     token.loc = self->lexer.loc;
@@ -159,7 +204,7 @@ static PASM_Token pasm_lexer_read_token(PASM *self) {
     }
 
     if (current == '\'') {
-        TODO("add chars to the lexer");
+        return pasm_lexer_lex_char(self);
     }
 
     PASM_ERROR_LOC(self->filename, self->lexer.loc, "failed to identify the char `%c`", current);
