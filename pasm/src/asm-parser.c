@@ -2,19 +2,6 @@
 
 PASM_Node pasm_parser_parse_statement(PASM *self);
 
-// void inst_begin(PASM_Inst *inst) {
-//     *inst = (Inst) {0};
-//     DA_INIT(&inst->ops, sizeof(Inst_Op));
-// }
-
-// void inst_set_kind(PASM_Inst *inst, Inst_Kind kind) {
-//     inst->kind = kind;
-// }
-
-// void inst_add_operand(PASM_Inst *inst, Inst_Op op) {
-//     DA_APPEND(&inst->ops, op);
-// }
-
 PASM_Token pasm_parser_peek(PASM *self) {
     return self->tokens.items[self->parser.current];
 }
@@ -295,11 +282,11 @@ PASM_Nodes pasm_parse_macro_block(PASM *self, String_View macro_name) {
 
     while (!peot(self)) {
         PASM_Token current = ppeek(self);
+        if (sv_eq(current.text, SV("end"))) { break; }
 
         if (current.kind == TOKEN_KIND_NEW_LINE) { padv(self); continue; }
-        if (sv_eq(current.text, SV("end"))) { break; }
-        
         PASM_Node node = pasm_parser_parse_statement(self);
+
         DA_APPEND(&block, node);
     }
 

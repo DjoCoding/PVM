@@ -232,7 +232,7 @@ struct PASM_Context {
     size_t count;
 };
 
-#define PASM_CONTEXTS_CAP 10
+#define PASM_CONTEXTS_CAP 100
 
 struct PASM_Contexts {
     PASM_Context items[PASM_CONTEXTS_CAP];

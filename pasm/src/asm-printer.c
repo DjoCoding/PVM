@@ -1,5 +1,12 @@
 #include "asm-printer.h"
 
+
+void print_indent(size_t indent) {
+    for (size_t i = 0; i < indent; ++i) {
+        printf("  ");
+    }
+}
+
 char *token_kind_to_cstr(PASM_Token_Kind kind) {
     char *kinds[] = {
         "string",
@@ -22,11 +29,22 @@ char *node_kind_to_cstr(PASM_Node_Kind kind) {
         "const-def",
         "entry-def",
         "use",
+        "macro",
+        "macro-call"
     };
     return kinds[kind];
 }
 
-char *type_to_string(PASM_Type type) {
+char *op_kind(Op_Kind kind) {
+    char *kinds[] = {
+        "number",
+        "string",
+        "id",
+    };
+    return kinds[kind];
+}
+
+char *type(PASM_Type type) {
     char *types[] = {
         "string",
         "number",
@@ -90,7 +108,7 @@ void pasm_print_tokens(PASM *self) {
 }
 
 void pasm_print_operand(Inst_Op op) {
-    printf("op type: %s ", type_to_string((PASM_Type) op.kind));
+    printf("op type: %s ", op_kind(op.kind));
     if (op.kind == OP_KIND_STRING) { printf("value: \"%s\"", (char *)op.value); }
     else if (op.kind == OP_KIND_NUMBER) { printf("value: %ld", op.value); }
     else if (op.kind == OP_KIND_ID) { printf("name: `%s`", (char *)op.value); }
@@ -106,7 +124,7 @@ void pasm_print_inst(Inst inst) {
 }
 
 void pasm_print_const(PASM_Const c) {
-    printf("type: %s ", type_to_string(c.type));
+    printf("type: %s ", type(c.type));
     printf(SV_FMT, SV_UNWRAP(c.value));
 } 
 
@@ -116,23 +134,48 @@ void pasm_print_consts(PASM_Consts consts) {
     }
 }
 
-void pasm_print_node(PASM_Node node) {
+void pasm_print_macro_call(PASM_Macro_Call call) {
+    printf("call: " SV_FMT ": ", SV_UNWRAP(call.name));
+    for (size_t i = 0; i < call.args.count; ++i) {
+        printf("\n\t\t");
+        pasm_print_operand(call.args.items[i]);
+    }
+}
+
+void pasm_print_macro_def(PASM_Macro_Def def, size_t indent) {
+    printf("macro `" SV_FMT "` ", SV_UNWRAP(def.name));
+    for (size_t i = 0; i < def.arg_names.count; ++i) {
+        printf("\n\t\t");
+        printf(SV_FMT " ", SV_UNWRAP(def.arg_names.items[i]));
+    }
+    printf("\n");
+    pasm_print_nodes(*def.block, indent + 1);
+}
+
+void pasm_print_node(PASM_Node node, size_t indent) {
     printf("node kind: %s:\n", node_kind_to_cstr(node.kind));
-    printf("\t");
+    print_indent(indent + 1);
 
     if (node.kind == NODE_KIND_INSTRUCTION) { pasm_print_inst(node.as.inst.as.inst); }
     else if (node.kind == NODE_KIND_CONST_DEF) { pasm_print_consts(node.as.constants); }
     else if (node.kind == NODE_KIND_LABEL_DEF) { printf(SV_FMT, SV_UNWRAP(node.as.label)); }
     else if (node.kind == NODE_KIND_ENTRY) { printf("entry: `" SV_FMT "`", SV_UNWRAP(node.as.label)); }
     else if (node.kind == NODE_KIND_USE) { printf("use: `" SV_FMT "` file", SV_UNWRAP(node.as.file_path)); }
+    else if (node.kind == NODE_KIND_MACRO) { pasm_print_macro_def(node.as.macro_def, indent); }
+    else if (node.kind == NODE_KIND_MACRO_CALL) { pasm_print_macro_call(node.as.macro_call); }
     else { ASSERT(false, "unreachable"); }
     
     printf("\n\n");
 }
 
-void pasm_print_nodes(PASM *self) {
-    for (size_t i = 0; i < self->nodes.count; ++i) {
+void pasm_print_nodes(PASM_Nodes nodes, size_t indent) {
+    for (size_t i = 0; i < nodes.count; ++i) {
+        print_indent(indent);
         printf("%zu - ", i + 1);
-        pasm_print_node(self->nodes.items[i]);
+        pasm_print_node(nodes.items[i], indent + 1);
     }
+}
+
+void pasm_print_parsing_result(PASM *self) {
+    pasm_print_nodes(self->nodes, 0);
 }

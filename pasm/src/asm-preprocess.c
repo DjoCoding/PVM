@@ -37,6 +37,7 @@ void pasm_add_to_global_context(PASM *self, char *name, PASM_Context_Value value
 
     // add it if no error occured
     pasm_add_context_value_to_context(&global_context, name, value);
+    self->contexts.items[0] = global_context;
 }
 
 void pasm_add_context(PASM *self, PASM_Context context) {
@@ -110,9 +111,40 @@ void pasm_process_external_file(PASM *self, PASM_Node node) {
     free(filename);
 }
 
+void pasm_process_macro_def_parts(PASM *self, char *name, PASM_Macro_Arg_Names names, PASM_Nodes block) {
+    int64_t index = pasm_has_this_identifier_in_contexts(self, name);
+    
+    if (index != -1) {
+        PASM_Context context = self->contexts.items[index];
+        PASM_Context_Value context_value = pasm_get_context_value_of_identifier(context, name);
+        
+        if (context_value.type == PASM_CONTEXT_VALUE_TYPE_LABEL) {
+            THROW_ERROR("`%s` first defined as a label", name);
+        }
+        if (context_value.type == PASM_CONTEXT_VALUE_TYPE_CONST) {
+            THROW_ERROR("`%s` first defined as a constant", name);
+        }
+        if (context_value.type == PASM_CONTEXT_VALUE_TYPE_MACRO) {
+            THROW_ERROR("`%s` defined twice as a macro", name);
+        }
+        ASSERT(false, "unreachable");
+    }
+
+    PASM_Context_Macro macro = {0};
+    macro.args = names;
+    macro.block = block;
+    macro.name = name;
+
+    // add the macro defintion to the block
+    PASM_Context_Value context_value = { .type = PASM_CONTEXT_VALUE_TYPE_MACRO, .as.macro = macro };
+    
+    // get the global context and append the macro to it
+    pasm_add_context_value_to_context(&self->contexts.items[0], name, context_value);
+}
+
 void pasm_process_macro_node(PASM *self, PASM_Node node) {
     char *macro_name = cstr_from_sv(node.as.macro_def.name);
-    pasm_process_macro_parts(self, macro_name, node.as.macro_def.arg_names, *node.as.macro_def.block);
+    pasm_process_macro_def_parts(self, macro_name, node.as.macro_def.arg_names, *node.as.macro_def.block);
 }
 
 void pasm_preprocess_node(PASM *self, PASM_Nodes nodes, size_t current) {
