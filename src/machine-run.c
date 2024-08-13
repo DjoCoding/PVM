@@ -1,5 +1,18 @@
 #include "machine-run.h"
 
+FILE *get_file_stream(int64_t file) {
+    switch(file) {
+        case 0:
+            return stdout;
+        case 1:
+            return stdin;
+        case 2:
+            return stderr;
+        default:
+            return (FILE *)file;
+    }
+}
+
 void handle_nop_inst(Machine *self) {
     self->ip++;
 }
@@ -115,6 +128,8 @@ void handle_inswap_inst(Machine *self, Inst inst) {
     self->stack.items[self->stack.count - 1] = self->stack.items[self->stack.count - pos - 1];
     self->stack.items[self->stack.count - pos - 1] = temp;
 
+    // machine_dump_stack(self);
+
     self->ip++;
 }
 
@@ -135,12 +150,13 @@ void handle_indup_inst(Machine *self, Inst inst) {
 }
 
 void handle_write_syscall(Machine *self) {
+    // size of the bytes: size
     // bytes to write: ptr
     // stream to write in: stream
 
-    char *bytes = (char *) pop(self);
     size_t size =  (size_t) pop(self);
-    FILE *f = (FILE *) pop(self);
+    char *bytes = (char *) pop(self);
+    FILE *f = get_file_stream(pop(self));
 
     fwrite(bytes, sizeof(char), size, f);
 }
@@ -150,11 +166,12 @@ void handle_read_syscall(Machine *self) {
     // file pointer:           f
 
     size_t size = (size_t) pop(self);
-    FILE *f = (FILE *) pop(self);
+    FILE *f = get_file_stream(pop(self));
 
-    size_t index = alloc(self, size);
+    size_t index = alloc(self, size + 1);
 
     fread(self->memory.items[index].data, sizeof(char), size, f);
+    self->memory.items[index].data[size] = 0;
     push(self, (int64_t)self->memory.items[index].data);
 }
 
@@ -326,8 +343,9 @@ void handle_jg_inst(Machine *self, Inst inst) {
 }
 
 void handle_putc_inst(Machine *self) {
-    int64_t top = pop(self);
-    putchar((int)top);
+    int64_t c = pop(self);
+    FILE *f = get_file_stream(pop(self));
+    putc((int)c, f);
     self->ip++;
 }
 
@@ -367,12 +385,32 @@ void handle_smem_inst(Machine *self) {
     // where to write : ptr
     
     size_t size = (size_t)pop(self); 
-    int64_t data = pop(self);
+    char *data = (char *)pop(self);
     void *ptr = (void *)pop(self);
-
-    memcpy(ptr, &data, size);
+    
+    memcpy(ptr, data, size);
+    
     self->ip++;
 }
+
+void handle_setc_inst(Machine *self) {
+    // data you wanna write (a char)
+    // where to write
+    int64_t c = pop(self);
+    char *ptr = (char *)pop(self);
+    
+    *ptr = c;
+    self->ip++;
+}
+
+void handle_getc_inst(Machine *self) {
+    // where to read 
+    char *ptr = (char *)pop(self);
+    
+    push(self, (int64_t)(*ptr));
+    self->ip++;
+}
+
 
 void handle_gmem_inst(Machine *self) {
     // how much data you wanna read : size 
@@ -387,6 +425,14 @@ void handle_gmem_inst(Machine *self) {
 
     self->ip++;
 }
+
+void handle_readc_inst(Machine *self) {
+    FILE *f = get_file_stream(pop(self));
+    int c = getc(f);
+    push(self, (int64_t)c);
+    self->ip++;
+}
+
 
 void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
     if (prog_inst.kind == PROGRAM_INST_PROGRAM) {
@@ -479,6 +525,15 @@ void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
             break;
         case INST_KIND_GMEM:
             handle_gmem_inst(self);
+            break;
+        case INST_KIND_READC:
+            handle_readc_inst(self);
+            break;
+        case INST_KIND_GETC:
+            handle_getc_inst(self);
+            break; 
+        case INST_KIND_SETC:
+            handle_setc_inst(self);
             break;
         default:
             ASSERT(false, "unreachable");

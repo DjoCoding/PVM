@@ -145,6 +145,9 @@ enum Inst_Kind {
     INST_KIND_STOP,
     INST_KIND_SMEM,
     INST_KIND_GMEM,
+    INST_KIND_READC,
+    INST_KIND_GETC,
+    INST_KIND_SETC,
     INST_KIND_NO_KIND,
 };
 

@@ -1,30 +1,38 @@
+# Compiler
 CC = gcc
+CFLAGS = -Wall -Wextra -I./src -ggdb2
 
-CFLAGS = -Wall -Werror -g -Wextra
-
-SRCDIR = src
+# Directories
+SRC_DIR = src
+OBJ_DIR = obj
 TOOLSDIR = ../tools
-OBJDIR = obj
 MACHINEDIR = ../src
+EXAMPLES_DIR = exemples
+TESTS_DIR = tests
+MAIN = pasm.c
 
-ENTRY = pasm.c
+# Source Files
+SRC_FILES = $(MAIN) $(wildcard $(SRC_DIR)/*.c)  $(wildcard $(TOOLSDIR)/*.c) $(wildcard $(MACHINEDIR)/*.c)
+OBJ_FILES = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC_FILES))
 
-SOURCES = $(ENTRY) $(wildcard $(SRCDIR)/*.c) $(wildcard $(TOOLSDIR)/*.c) $(wildcard $(MACHINEDIR)/*.c) 
-
-OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SOURCES))
-
+# Executable
 EXEC = pasm
+
+# Targets
+.PHONY: all clean
 
 all: $(EXEC)
 
-$(EXEC): $(OBJECTS)
+# Link object files to create the executable
+$(EXEC): $(OBJ_FILES)
 	$(CC) $(CFLAGS) -o $@ $^
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
-	@mkdir -p $(OBJDIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
+# Compile C source files to object files in a single directory
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@ 
 
+# Clean the build
 clean:
-	rm -f $(OBJDIR)/*.o $(EXEC)
+	rm -f $(OBJ_DIR)/*.o $(EXEC)
 
-.PHONY: all clean

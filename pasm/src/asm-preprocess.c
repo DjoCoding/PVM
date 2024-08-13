@@ -71,12 +71,12 @@ void pasm_process_external_file(PASM *self, PASM_Node node) {
 
 
     // getting the absolute path of the current file
-    char root_file_abs_path[FILENAME_MAX] = {0};    
+    char *root_file_abs_path = calloc(FILENAME_MAX + 1, sizeof(char));
     realpath(self->filename, root_file_abs_path);
 
 
     // getting the abs path the sub file 
-    char sub_file_abs_path[FILENAME_MAX] = {0};
+    char *sub_file_abs_path = calloc(FILENAME_MAX + 1, sizeof(char));
     if (!realpath(filename, sub_file_abs_path)) {
         THROW_ERROR("file `%s` included in %s not found", filename, self->filename);
     }

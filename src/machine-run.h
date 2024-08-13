@@ -2,6 +2,10 @@
 #define MACHINE_RUN_H
 
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "machine-defs.h"
 #include "machine-clean.h"

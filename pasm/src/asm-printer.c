@@ -44,12 +44,14 @@ char *op_kind(Op_Kind kind) {
     return kinds[kind];
 }
 
-char *type(PASM_Type type) {
+char *type(PASM_Arg_Type type) {
     char *types[] = {
         "string",
         "number",
+        "float",
         "char",
-    };
+        "id",
+    }; 
     return types[type];
 }
 
@@ -123,9 +125,38 @@ void pasm_print_inst(Inst inst) {
     }
 }
 
+void pasm_print_arg_value(PASM_Arg arg) {
+    if (arg.type == TYPE_STRING) {
+        printf("%s", arg.as.string);
+        return;
+    } 
+
+    if (arg.type == TYPE_INTEGER) {
+        printf("%ld", arg.as.integer);
+        return;
+    }
+
+    if (arg.type == TYPE_CHAR) {
+        printf("%c", arg.as.c);
+        return;
+    }
+
+    if (arg.type == TYPE_FLOAT) {
+        printf("%lf", arg.as.flt);
+        return;
+    }
+
+    if (arg.type == TYPE_ID) {
+        printf(SV_FMT, SV_UNWRAP(arg.as.id));
+        return;
+    }
+
+    ASSERT(false, "unreachable");
+}
+
 void pasm_print_const(PASM_Const c) {
-    printf("type: %s ", type(c.type));
-    printf(SV_FMT, SV_UNWRAP(c.value));
+    printf("type: %s ", type(c.value.type));
+    pasm_print_arg_value(c.value);
 } 
 
 void pasm_print_consts(PASM_Consts consts) {
