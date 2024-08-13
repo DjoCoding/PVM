@@ -1,8 +1,8 @@
 #include "src/machine.h"
 
 char *argv_shift(int *argc, char ***argv) {
-    argc--;
     char *value = **argv;
+    *argc -= 1;
     *argv += 1;
     return value;
 }
