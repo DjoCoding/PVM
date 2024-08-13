@@ -1,9 +1,9 @@
 #use "std.pasm"
 
-#const HELLO_WORLD "Hello World" end 
+#const msg "Hello World" end 
 
 #main:	
-	println $HELLO_WORLD
+	println $msg
 	ret 
 
 #entry: $main
