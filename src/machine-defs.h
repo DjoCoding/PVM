@@ -87,12 +87,33 @@ typedef struct Program_Entry Program_Entry;
 typedef struct Program Program;
 
 typedef enum SysCall_ID SysCall_ID;
+typedef enum Open_File_Mode Open_File_Mode;
+
+enum Open_File_Mode {
+    READ_MODE = 0,
+    WRITE_MODE,
+    APPEND_MODE,
+    READ_WRITE_MODE,
+    WRITE_READ_MODE,            // erase the file once opened
+    READ_APPEND_MODE,
+    READ_BIN_MODE,
+    WRITE_BIN_MODE,
+    APPEND_BIN_MODE,
+    READ_WRITE_BIN_MODE,
+    WRITE_READ_BIN_MODE,
+    READ_APPEND_BIN_MODE,
+    MODES_COUNT,
+};
 
 enum SysCall_ID {
     SYSCALL_WRITE = 0,
     SYSCALL_READ,
     SYSCALL_ALLOC,
     SYSCALL_FREE,
+    SYSCALL_OPEN,
+    SYSCALL_CLOSE,
+    SYSCALL_EXIT,
+    SYCALL_COUNT,
 };
 
 enum Inst_Kind {

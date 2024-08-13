@@ -27,16 +27,20 @@ struct Strings {
 
 typedef Program PASM_Prog;
 
-typedef enum PASM_Context_Value_Type PASM_Context_Value_Type;
-typedef union PASM_Context_Value_As PASM_Context_Value_As;
-typedef struct PASM_Context_Value PASM_Context_Value;
-
 typedef enum PASM_Token_Kind PASM_Token_Kind;
 typedef union PASM_Token_As PASM_Token_As;
 typedef struct PASM_Token PASM_Token;
 typedef struct PASM_Tokens PASM_Tokens;
 
-typedef enum PASM_Type PASM_Type;
+typedef enum PASM_Context_Value_Type PASM_Context_Value_Type;
+typedef union PASM_Context_Value_As PASM_Context_Value_As;
+typedef struct PASM_Context_Value PASM_Context_Value;
+
+
+typedef enum PASM_Arg_Type PASM_Arg_Type;
+typedef union PASM_Arg_As PASM_Arg_As;
+typedef struct PASM_Arg PASM_Arg;
+typedef struct PASM_Args PASM_Args;
 
 typedef struct PASM_Label PASM_Label;
 
@@ -53,16 +57,12 @@ typedef struct PASM_Nodes PASM_Nodes;
 typedef struct PASM_Lexer PASM_Lexer;
 typedef struct PASM_Parser PASM_Parser;
 
-typedef struct PASM_Arg PASM_Arg;
-typedef struct PASM_Args PASM_Args;
+typedef struct PASM_Const PASM_Const;
 
-typedef PASM_Arg PASM_Const;
-typedef PASM_Arg PASM_Macro_Arg;
-
-typedef PASM_Args PASM_Consts;
+typedef struct PASM_Consts PASM_Consts;
 typedef PASM_Args PASM_Macro_Args;
 
-typedef struct PASM_Context_Const PASM_Context_Const;
+typedef PASM_Arg PASM_Context_Const;
 typedef struct PASM_Context_Macro PASM_Context_Macro;
 typedef struct PASM_Context_Label PASM_Context_Label;
 typedef struct PASM_Context PASM_Context;
@@ -111,28 +111,25 @@ struct PASM_Tokens {
     size_t current;
 };
 
-enum PASM_Type {
+enum PASM_Arg_Type { 
     TYPE_STRING = 0,
-    TYPE_NUMBER,
-    TYPE_CHAR, 
+    TYPE_INTEGER,
+    TYPE_FLOAT,
+    TYPE_CHAR,
+    TYPE_ID,  
 };
 
-struct PASM_Const {
-    PASM_Type kind;
-    String_View name;
-    String_View value;
-};
-
-struct PASM_Consts {
-    PASM_Const *items;
-    size_t count;
-    size_t size;
+union PASM_Arg_As {
+    char *string;
+    int64_t integer;
+    double flt;
+    char c;
+    String_View id;
 };
 
 struct PASM_Arg {
-    String_View name;
-    PASM_Type type;
-    String_View value;
+    PASM_Arg_Type type;
+    PASM_Arg_As as;
 };
 
 struct PASM_Args {
@@ -150,6 +147,17 @@ struct PASM_Macro_Def {
 struct PASM_Macro_Call {
     String_View name;
     Inst_Ops args;
+};
+
+struct PASM_Const {
+    String_View name;
+    PASM_Arg value;
+};
+
+struct PASM_Consts {
+    PASM_Const *items;
+    size_t count;
+    size_t size;
 };
 
 enum PASM_Node_Kind {
@@ -182,7 +190,6 @@ struct PASM_Nodes {
     size_t size;
 };
 
-
 struct PASM_Lexer {
     String_View source;
     Location loc;
@@ -191,12 +198,6 @@ struct PASM_Lexer {
 
 struct PASM_Parser {
     size_t current;
-};
-
-
-struct PASM_Context_Const {
-    PASM_Type type;
-    int64_t value;
 };
 
 struct PASM_Context_Label {
@@ -257,7 +258,6 @@ struct PASM {
     PASM_Prog prog;
     size_t prog_size;                                // used for preprocessing
 };
-
 
 
 #endif // PASM_DEFS_H

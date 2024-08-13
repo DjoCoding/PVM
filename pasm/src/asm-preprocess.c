@@ -11,9 +11,9 @@ bool made_for_preprocessing_stage[] = {
 };
 
 void pasm_process_const(PASM *self, PASM_Const constant) {
-    char *const_name = cstr_from_sv(constant.name);
-    int64_t const_value = (int64_t)cstr_from_sv(constant.value);
-    pasm_process_const_parts(self, const_name, constant.type, const_value);  
+    char *name = cstr_from_sv(constant.name);
+    PASM_Arg value = constant.value; 
+    pasm_process_const_parts(self, name, value);  
 }
 
 void pasm_process_consts_node(PASM *self, PASM_Node node) {
@@ -179,6 +179,6 @@ void pasm_preprocess(PASM *self, PASM_Nodes nodes) {
             continue;
         } 
         
-        if (nodes.items[i].kind == NODE_KIND_INSTRUCTION) { self->prog_size++; }
+        if (nodes.items[i].kind == NODE_KIND_INSTRUCTION || nodes.items[i].kind == NODE_KIND_MACRO_CALL) { self->prog_size++; }
     }
 }

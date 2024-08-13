@@ -38,12 +38,17 @@ PASM_Context_Value pasm_get_context_value_from_operand(Inst_Op op) {
         
     PASM_Context_Const argument = {0};
     {
-        if (op.kind == OP_KIND_NUMBER) argument.type = TYPE_NUMBER;
-        else if (op.kind == OP_KIND_STRING) argument.type = TYPE_STRING;    
+        if (op.kind == OP_KIND_NUMBER) {
+            argument.type = TYPE_INTEGER;
+            argument.as.integer = op.value;
+        }
+        else if (op.kind == OP_KIND_STRING) {
+            argument.type = TYPE_STRING;
+            argument.as.string = (char *)op.value;
+        } 
         else if (op.kind == OP_KIND_ID) {
             TODO("handle this case");
         }
-        argument.value = op.value;
     }
 
     context_value.type = PASM_CONTEXT_VALUE_TYPE_CONST;

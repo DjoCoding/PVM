@@ -2,6 +2,25 @@
 
 PASM_Node pasm_parser_parse_statement(PASM *self);
 
+char *parse_string(String_View view) {
+    // handle the escaping
+    char *s = sv_escape(view);
+    return s;
+}
+
+char parse_char(String_View view) {
+    char *s = sv_escape(view);
+    size_t s_size = strlen(s);
+    if (s_size != 1) { THROW_ERROR("could not parse the char `%s`", s); }
+    return s[0];
+}
+
+int64_t parse_integer(String_View view) {
+    int64_t result = 0;
+    if (!sv_parse_integer(view, &result)) { THROW_ERROR("could not parse the number `" SV_FMT "`", SV_UNWRAP(view)); }
+    return result;
+}
+
 PASM_Token pasm_parser_peek(PASM *self) {
     return self->tokens.items[self->parser.current];
 }
@@ -81,7 +100,7 @@ Inst_Op pasm_parser_parse_operand(PASM *self) {
 
     if (token.kind == TOKEN_KIND_STRING) { 
         op.kind = OP_KIND_STRING;
-        op.value = (int64_t) cstr_from_sv(token.text);
+        op.value = (int64_t) parse_string(token.text);
         padv(self);
         return op;
     }
@@ -102,9 +121,7 @@ Inst_Op pasm_parser_parse_operand(PASM *self) {
 
     if (token.kind == TOKEN_KIND_CHAR) {
         op.kind = OP_KIND_NUMBER;
-        char *s = sv_escape(token.text);
-        printf("---------------- %s ------------ ", s);
-        op.value = (int64_t)(s[0]);
+        op.value = (int64_t)parse_char(token.text);
         padv(self);
         return op;
     }
@@ -161,11 +178,19 @@ PASM_Const pasm_parser_parse_const(PASM *self) {
     if (peol(self)) { PASM_ERROR_LINE(self->filename, token.loc.line, "expected a value for the constant `" SV_FMT "` but end of line found", SV_UNWRAP(node.name)); }
     
     token = ppeek(self);
-    node.value = token.text;
 
-    if (token.kind == TOKEN_KIND_STRING) { node.type = TYPE_STRING; }
-    else if (token.kind == TOKEN_KIND_NUMBER) { node.type = TYPE_NUMBER; } 
-    else if (token.kind == TOKEN_KIND_CHAR) { node.type = TYPE_CHAR; }
+    if (token.kind == TOKEN_KIND_STRING) { 
+        node.value.type = TYPE_STRING;
+        node.value.as.string = parse_string(token.text);
+    }
+    else if (token.kind == TOKEN_KIND_NUMBER) { 
+        node.value.type = TYPE_INTEGER;
+        node.value.as.integer = parse_integer(token.text);
+    }
+    else if (token.kind == TOKEN_KIND_CHAR) { 
+        node.value.type = TYPE_CHAR;
+        node.value.as.c = parse_char(token.text);
+    }
     else { PASM_ERROR_LOC(self->filename, token.loc, "expected a value for the constant `" SV_FMT "` but %s found", SV_UNWRAP(node.name), token_kind_to_cstr(token.kind)); }
 
     // consuming the constant value

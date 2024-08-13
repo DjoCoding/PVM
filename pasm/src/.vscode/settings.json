@@ -8,6 +8,13 @@
         "ctype.h": "c",
         "asm-preprocess.h": "c",
         "asm-code.h": "c",
-        "asm.h": "c"
+        "asm.h": "c",
+        "asm-code-processor.h": "c",
+        "array": "c",
+        "compare": "c",
+        "functional": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c"
     }
 }

@@ -31,7 +31,7 @@ void handle_pushs_inst(Machine *self, Inst inst) {
     char *string = (char *)op.value;
     size_t str_size = strlen(string);
     size_t mem_index = alloc(self, str_size);
-    memcpy(&self->memory.items[mem_index].data, string, str_size);
+    memcpy(self->memory.items[mem_index].data, string, str_size);
 
     // DA_APPEND(&self->str_stack, view);
 
@@ -135,32 +135,26 @@ void handle_indup_inst(Machine *self, Inst inst) {
 }
 
 void handle_write_syscall(Machine *self) {
-    int64_t top = pop(self);
-    char *ptr = (char *)top;
-    
-    // if (pos >= self->str_stack.count) { THROW_ERROR("invalid memory region accessed"); }
+    // bytes to write: ptr
+    // stream to write in: stream
 
-    // String_View string = self->str_stack.items[pos];
+    char *bytes = (char *) pop(self);
+    size_t size =  (size_t) pop(self);
+    FILE *f = (FILE *) pop(self);
 
-    // printf(SV_FMT, SV_UNWRAP(string));
-    printf("%s", ptr);
+    fwrite(bytes, sizeof(char), size, f);
 }
 
 void handle_read_syscall(Machine *self) {
-    // read the number of bytes available in the top of the stack
-    // allocate the string in the heap
-    // push the string position to the stack
+    // how many bytes to read: size
+    // file pointer:           f
 
-    int64_t top = pop(self);
-    size_t size = (size_t)top;
+    size_t size = (size_t) pop(self);
+    FILE *f = (FILE *) pop(self);
 
     size_t index = alloc(self, size);
 
-    for (size_t i = 0; i < size; ++i) {
-        char c = getchar();
-        self->memory.items[index].data[i] = c == '\n' ? 0 : c;
-    }
-
+    fread(self->memory.items[index].data, sizeof(char), size, f);
     push(self, (int64_t)self->memory.items[index].data);
 }
 
@@ -177,13 +171,49 @@ void handle_free_syscall(Machine *self) {
     free(ptr);
 }
 
+void handle_open_syscall(Machine *self) {
+    Open_File_Mode mode_value = (Open_File_Mode) pop(self); 
+    char *filepath = (char *)pop(self);
+
+    if (mode_value >= MODES_COUNT) { THROW_ERROR("could not open the file `%s` due to the invalid mode value", filepath); }
+
+    char *modes[] = {
+        "r",
+        "w",
+        "a",
+        "r+",
+        "w+",
+        "a+",
+        "rb",
+        "wb",
+        "ab",
+        "rb+",
+        "wb+",
+        "ab+",
+    };
+
+    FILE *f = fopen(filepath, modes[mode_value]);
+    push(self, (int64_t)f);
+}
+
+void handle_close_syscall(Machine *self) {
+    FILE *f = (FILE *)pop(self);
+    fclose(f);
+}
+
+void handle_exit_syscall(Machine *self) {
+    int64_t exit_code = pop(self);
+    exit(exit_code);
+}
+
 void handle_syscall(Machine *self, Inst inst) {
     ASSERT(inst.kind == INST_KIND_SYSCALL, "could not execute the instruction");
-
     if (inst.ops.count != 1) { THROW_ERROR("`syscall` instruction accepts one operand"); }
 
     Inst_Op op = inst.ops.items[0];
+
     if (op.kind != OP_KIND_NUMBER) { THROW_ERROR("`syscall` instruction accepts a number as an operand"); }
+    if (op.value >= SYCALL_COUNT) { THROW_ERROR("could not make a system call due to the invalid operand passed to it %zu", (size_t)op.value); }
 
     switch((SysCall_ID) op.value) {
         case SYSCALL_WRITE:
@@ -197,6 +227,15 @@ void handle_syscall(Machine *self, Inst inst) {
             break;
         case SYSCALL_FREE:
             handle_free_syscall(self);
+            break;
+        case SYSCALL_OPEN:
+            handle_open_syscall(self);
+            break;
+        case SYSCALL_CLOSE:
+            handle_close_syscall(self);
+            break;
+        case SYSCALL_EXIT:
+            handle_exit_syscall(self);
             break;
         default:
             ASSERT(false, "unreachable");

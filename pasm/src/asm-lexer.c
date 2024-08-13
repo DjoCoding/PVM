@@ -139,13 +139,6 @@ static PASM_Token pasm_lexer_lex_char(PASM *self) {
         PASM_ERROR_LOC(self->filename, token.loc, "failed to parse the char \"" SV_FMT "\"", SV_UNWRAP(org));
     }
 
-    char *s = sv_escape(org);
-    size_t s_size = strlen(s);
-
-    if (s_size > 1) { 
-        PASM_ERROR_LOC(self->filename, token.loc, "expected a char but got a string \"" SV_FMT "\"", SV_UNWRAP(org));
-    }
-
     token.kind = TOKEN_KIND_CHAR;
     token.text = org;
     
