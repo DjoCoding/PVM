@@ -5,6 +5,7 @@ CFLAGS = -Wall -Werror -g
 SRCDIR = src
 OBJDIR = obj
 TOOLSDIR = tools
+BIN = bin
 
 ENTRY = pvmr.c
 
@@ -18,6 +19,8 @@ all: $(EXEC)
 
 $(EXEC): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $@ $^
+	@mkdir -p $(BIN)
+	mv $(EXEC) $(BIN)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	@mkdir -p $(OBJDIR)

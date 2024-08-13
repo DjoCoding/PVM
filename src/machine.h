@@ -9,6 +9,6 @@
 #include "machine-run.h"
 
 Machine machine_init();
-Program load_prog_from_file(Machine *self, char *filename);
+Program machine_load_prog_from_file(char *filepath);
 
 #endif // MACHINE_H

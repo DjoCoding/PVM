@@ -10,6 +10,7 @@ MACHINEDIR = ../src
 EXAMPLES_DIR = exemples
 TESTS_DIR = tests
 MAIN = pasm.c
+BIN = ../bin
 
 # Source Files
 SRC_FILES = $(MAIN) $(wildcard $(SRC_DIR)/*.c)  $(wildcard $(TOOLSDIR)/*.c) $(wildcard $(MACHINEDIR)/*.c)
@@ -26,6 +27,8 @@ all: $(EXEC)
 # Link object files to create the executable
 $(EXEC): $(OBJ_FILES)
 	$(CC) $(CFLAGS) -o $@ $^
+	@mkdir -p $(BIN)
+	mv $(EXEC) $(BIN)
 
 # Compile C source files to object files in a single directory
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c

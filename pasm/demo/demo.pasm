@@ -2,7 +2,7 @@
 #use "string.pasm"
 
 #main:
-    pushs "djaoued"
+    pushs "djaoued\n"
     len
     push $STDOUT
     inswap 2

@@ -17,10 +17,10 @@ char *cstr_from_sv(String_View s) {
 }
 
 String_View sv_from_file(char *filename) {
-    if (!filename) THROW_ERROR("`sv_from_file` failed, file name not provided\n");
+    if (!filename) THROW_ERROR("file name not provided\n");
     
     FILE *f = fopen(filename, "r");
-    if (!f) THROW_ERROR("`sv_from_file` failed, Could not open the file %s\n", filename);
+    if (!f) THROW_ERROR("could not open the file %s\n", filename);
 
     fseek(f, 0, SEEK_END);
     size_t fsize = ftell(f);
@@ -229,9 +229,12 @@ bool sv_starts_with(String_View s, char c) {
     return (s.content[0] == c);
 }
 
-bool sv_ends_with(String_View s, char c) {
-    if (sv_empty(s)) return false;
-    return (s.content[s.count - 1] == c);
+bool sv_ends_with(String_View s, String_View t) {
+    if (sv_empty(t)) { return true; }
+    if (s.count < t.count) { return false; }
+
+    String_View view = SV_GET(s.content + s.count - t.count, t.count);
+    return sv_eq(view, t);
 }
 
 String_View sv_chop_left(String_View s) {

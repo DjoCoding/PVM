@@ -47,7 +47,7 @@ char sv_at(String_View s, size_t index);
 int64_t sv_find_index(String_View s, char c);
 size_t sv_count_char(String_View s, char c);
 bool sv_starts_with(String_View s, char c);
-bool sv_ends_with(String_View s, char c);
+bool sv_ends_with(String_View s, String_View t);
 bool sv_is_integer(String_View s);
 bool sv_is_float(String_View s);
 bool sv_parse_integer(String_View s, int64_t *result);

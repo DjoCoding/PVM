@@ -8,20 +8,22 @@ char *argv_shift(int *argc, char ***argv) {
 }
 
 void usage(char *program) {  
-    fprintf(stderr, "Usage: %s --<flags> <file_name.tim>\n", program);
-    fprintf(stderr, "Flags: disasm\n");		
-    exit(1);
+    fprintf(stderr, "Usage: %s --<flags> <path.pvm>\n", program);
+}
+
+int filepath_correct(char *filepath) {
+    return sv_ends_with(SV(filepath), SV(".pvm"));
 }
 
 int main(int argc, char **argv) {   
     char *program = argv_shift(&argc, &argv);
-    char *file_path = argv_shift(&argc, &argv);
+    char *filepath = argv_shift(&argc, &argv);
 
-    if (!file_path) { usage(program); }
+    if (!filepath) { usage(program); }
 
     Machine m = machine_init(); 
+    Program prog = machine_load_prog_from_file(filepath);
+    machine_exec_prog(&m, prog);
 
-    (void)m;
-    
     return 0;
 }
