@@ -253,7 +253,7 @@ struct PASM {
     // PASM_SubRoutine_Contexts sub_contexts;           // sub routine contexts
 
     PASM_Super_Files sup_files;                      // if a file `a` includes a file `b` then the file `a` is a super file of `b`
-    PASM_Used_Files files;                           // for the files used in the this current pasm file
+    PASM_Used_Files used_files;                           // for the files used in the this current pasm file
 
     PASM_Prog prog;
     size_t prog_size;                                // used for preprocessing

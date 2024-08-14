@@ -10,7 +10,7 @@ PASM pasm_init(char *filename) {
     
     // initialize the include files
     DA_INIT(&pasm.sup_files, sizeof(char *));
-    DA_INIT(&pasm.files, sizeof(char *));
+    DA_INIT(&pasm.used_files, sizeof(char *));
 
     // initialize the global pasm context
     pasm_push_context(&pasm);

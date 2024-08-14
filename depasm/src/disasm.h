@@ -6,5 +6,6 @@
 #include "../../tools/sv.h"
 
 void depasm(FILE *f, Program prog);
+void depasm_clean_prog(Program prog);
 
 #endif 

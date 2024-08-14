@@ -24,6 +24,7 @@ int main(int argc, char **argv) {
     Machine m = machine_init(); 
     Program prog = machine_load_prog_from_file(filepath);
     machine_exec_prog(&m, prog);
+    machine_clean(&m);
 
     return 0;
 }

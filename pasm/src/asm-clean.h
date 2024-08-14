@@ -1,8 +1,8 @@
-// #ifndef PASM_CLEAN_H
-// #define PASM_CLEAN_H
+#ifndef PASM_CLEAN_H
+#define PASM_CLEAN_H
 
-// #include "asm-defs.h"
+#include "asm-defs.h"
 
-// void pasm_clean(PASM *self);
+void pasm_clean(PASM *self);
 
-// #endif // PASM_CLEAN_H
+#endif // PASM_CLEAN_H

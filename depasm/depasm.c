@@ -64,7 +64,10 @@ int main(int argc, char **argv) {
         usage(program);
         THROW_ERROR("could not open the file `%s` for writing", output_filepath);
     }
+    
     depasm(f, prog);
+    depasm_clean_prog(prog);
+
     fclose(f);
     return 0;
 }

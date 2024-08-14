@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
     PASM pasm = pasm_init(filepath);
     compile(&pasm);
     pasm_store_prog_in_file(get_output_filepath(filepath), pasm.prog);
+    pasm_clean(&pasm);
     
     return 0;
 }

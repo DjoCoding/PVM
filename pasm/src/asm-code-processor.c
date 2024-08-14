@@ -1,8 +1,8 @@
 #include "asm-code-processor.h"
 
 bool pasm_check_file_included(PASM *self, char *filename) {
-    for (size_t i = 0; i < self->files.count; ++i) {
-        if (strcmp(filename, self->files.items[i]) == 0) { return true; }
+    for (size_t i = 0; i < self->used_files.count; ++i) {
+        if (strcmp(filename, self->used_files.items[i]) == 0) { return true; }
     }
     return false;
 }
@@ -233,7 +233,7 @@ void pasm_add_super_files(PASM *self, PASM_Super_Files sup_files) {
 }
 
 void pasm_add_sub_file(PASM *self, char *filename) {
-    DA_APPEND(&self->files, filename);
+    DA_APPEND(&self->used_files, filename);
 }
 
 bool pasm_has_super_files(PASM *self) {

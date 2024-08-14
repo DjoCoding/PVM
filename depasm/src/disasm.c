@@ -1,5 +1,36 @@
 #include "disasm.h"
 
+// clean 
+
+void depasm_clean_operand(Inst_Op op) {
+    if (op.kind == OP_KIND_STRING) {
+        free((char *)op.value);
+    }
+}
+
+void depasm_clean_operands(Inst_Ops ops) {
+    for (size_t i = 0; i < ops.count; ++i) {
+        depasm_clean_operand(ops.items[i]);
+    }
+    free(ops.items);
+}
+
+void depasm_clean_prog_inst(Program_Inst prog_inst) {
+    if (prog_inst.kind == PROGRAM_INST_INSTRUCTION) {
+        depasm_clean_operands(prog_inst.as.inst.ops);
+    } else if (prog_inst.kind == PROGRAM_INST_PROGRAM) {
+        depasm_clean_prog(*prog_inst.as.prog);
+        free(prog_inst.as.prog);
+    } else { ASSERT(false, "unreachable"); }
+}
+
+void depasm_clean_prog(Program prog) {
+    for (size_t i = 0; i < prog.count; ++i) {
+        depasm_clean_prog_inst(prog.items[i]);
+    }
+    free(prog.items);
+}
+
 size_t line = 0;
 
 void depasm_write_line(FILE *f) {
