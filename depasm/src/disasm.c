@@ -57,20 +57,24 @@ void depasm_write_inst_kind(FILE *f, Inst_Kind kind) {
         "syscall",
         "jmp",
         "cmp",
+        "cmple",
+        "cmpl",
+        "cmpge",
+        "cmpg",
         "jz",
         "jle",
         "jge",
         "jl",
         "jg",
         "putc",
+        "readc",
         "call",
         "ret",
         "stop",
-        "smem",
-        "gmem",
-        "readc",
-        "getc",
-        "setc"
+        "store",
+        "load",
+        "getb",
+        "setb"
     };
 
     fprintf(f, "%s ", op_codes[kind]);

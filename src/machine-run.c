@@ -379,7 +379,7 @@ void handle_stop_inst(Machine *self) {
     self->progs.items[self->progs.count - 1].state = PROGRAM_STATE_EXECTUED;
 }
 
-void handle_smem_inst(Machine *self) {
+void handle_store_inst(Machine *self) {
     // how much data you wanna write : size 
     // what is this data : data
     // where to write : ptr
@@ -393,7 +393,7 @@ void handle_smem_inst(Machine *self) {
     self->ip++;
 }
 
-void handle_setc_inst(Machine *self) {
+void handle_setb_inst(Machine *self) {
     // data you wanna write (a char)
     // where to write
     int64_t c = pop(self);
@@ -403,7 +403,7 @@ void handle_setc_inst(Machine *self) {
     self->ip++;
 }
 
-void handle_getc_inst(Machine *self) {
+void handle_getb_inst(Machine *self) {
     // where to read 
     char *ptr = (char *)pop(self);
     
@@ -412,7 +412,7 @@ void handle_getc_inst(Machine *self) {
 }
 
 
-void handle_gmem_inst(Machine *self) {
+void handle_load_inst(Machine *self) {
     // how much data you wanna read : size 
     // where to read : ptr
 
@@ -433,6 +433,29 @@ void handle_readc_inst(Machine *self) {
     self->ip++;
 }
 
+void handle_cmple_inst(Machine *self) {
+    int64_t rhs = pop(self), lhs = pop(self);
+    push(self, (int64_t)(lhs <= rhs));
+    self->ip++;
+}
+
+void handle_cmpl_inst(Machine *self) {
+    int64_t rhs = pop(self), lhs = pop(self);
+    push(self, (int64_t)(lhs < rhs));
+    self->ip++;
+}
+
+void handle_cmpge_inst(Machine *self) {
+    int64_t rhs = pop(self), lhs = pop(self);
+    push(self, (int64_t)(lhs >= rhs));
+    self->ip++;
+}
+
+void handle_cmpg_inst(Machine *self) {
+    int64_t rhs = pop(self), lhs = pop(self);
+    push(self, (int64_t)(lhs > rhs));
+    self->ip++;
+}
 
 void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
     if (prog_inst.kind == PROGRAM_INST_PROGRAM) {
@@ -520,20 +543,32 @@ void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
         case INST_KIND_STOP:
             handle_stop_inst(self);
             break;
-        case INST_KIND_SMEM:
-            handle_smem_inst(self);
+        case INST_KIND_STORE:
+            handle_store_inst(self);
             break;
-        case INST_KIND_GMEM:
-            handle_gmem_inst(self);
+        case INST_KIND_LOAD:
+            handle_load_inst(self);
             break;
         case INST_KIND_READC:
             handle_readc_inst(self);
             break;
-        case INST_KIND_GETC:
-            handle_getc_inst(self);
+        case INST_KIND_GETB:
+            handle_getb_inst(self);
             break; 
-        case INST_KIND_SETC:
-            handle_setc_inst(self);
+        case INST_KIND_SETB:
+            handle_setb_inst(self);
+            break;
+        case INST_KIND_CMPLE:
+            handle_cmple_inst(self);
+            break;
+        case INST_KIND_CMPL:
+            handle_cmpl_inst(self);
+            break;
+        case INST_KIND_CMPGE:
+            handle_cmpge_inst(self);
+            break;
+        case INST_KIND_CMPG:
+            handle_cmpg_inst(self);
             break;
         default:
             ASSERT(false, "unreachable");
