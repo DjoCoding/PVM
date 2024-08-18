@@ -81,8 +81,8 @@ bool is_instruction(String_View s, Inst_Kind *kind) {
         "stop",
         "store",
         "load",
-        "getc",
-        "setc"
+        "loadb",
+        "strb"
     };
 
     size_t inst_size = sizeof(instructions)/sizeof(instructions[0]);

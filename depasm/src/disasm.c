@@ -40,7 +40,7 @@ void depasm_write_line(FILE *f) {
 
 void depasm_write_inst_kind(FILE *f, Inst_Kind kind) {
     char *op_codes[] = {
-        "nop",
+         "nop",
         "halt",
         "push",
         "pushs",
@@ -73,8 +73,8 @@ void depasm_write_inst_kind(FILE *f, Inst_Kind kind) {
         "stop",
         "store",
         "load",
-        "getb",
-        "setb"
+        "loadb",
+        "strb"
     };
 
     fprintf(f, "%s ", op_codes[kind]);

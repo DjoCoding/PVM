@@ -74,14 +74,24 @@ char *inst_kind_to_cstr(Inst_Kind kind) {
         "syscall",
         "jmp",
         "cmp",
+        "cmple",
+        "cmpl",
+        "cmpge",
+        "cmpg",
         "jz",
         "jle",
         "jge",
         "jl",
         "jg",
         "putc",
+        "readc",
         "call",
         "ret",
+        "stop",
+        "store",
+        "load",
+        "loadb",
+        "strb"
     };
 
     size_t inst_size = sizeof(kinds)/sizeof(kinds[0]);

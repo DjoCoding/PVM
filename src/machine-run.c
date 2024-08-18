@@ -393,7 +393,7 @@ void handle_store_inst(Machine *self) {
     self->ip++;
 }
 
-void handle_setb_inst(Machine *self) {
+void handle_strb_inst(Machine *self) {
     // data you wanna write (a char)
     // where to write
     int64_t c = pop(self);
@@ -403,7 +403,7 @@ void handle_setb_inst(Machine *self) {
     self->ip++;
 }
 
-void handle_getb_inst(Machine *self) {
+void handle_loadb_inst(Machine *self) {
     // where to read 
     char *ptr = (char *)pop(self);
     
@@ -552,11 +552,11 @@ void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
         case INST_KIND_READC:
             handle_readc_inst(self);
             break;
-        case INST_KIND_GETB:
-            handle_getb_inst(self);
+        case INST_KIND_LOADB:
+            handle_loadb_inst(self);
             break; 
-        case INST_KIND_SETB:
-            handle_setb_inst(self);
+        case INST_KIND_STRB:
+            handle_strb_inst(self);
             break;
         case INST_KIND_CMPLE:
             handle_cmple_inst(self);

@@ -150,8 +150,8 @@ enum Inst_Kind {
     INST_KIND_STOP,
     INST_KIND_STORE,
     INST_KIND_LOAD,
-    INST_KIND_GETB,            // get a single byte
-    INST_KIND_SETB,            // set a single byte
+    INST_KIND_LOADB,            // get a single byte
+    INST_KIND_STRB,             // set a single byte
     INST_KIND_NO_KIND,
 };
 
