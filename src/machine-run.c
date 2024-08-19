@@ -457,6 +457,12 @@ void handle_cmpg_inst(Machine *self) {
     self->ip++;
 }
 
+void handle_ssp_inst(Machine *self) {
+    int64_t top = pop(self);
+    self->stack.count = (size_t)top;
+    self->ip++;
+}
+
 void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
     if (prog_inst.kind == PROGRAM_INST_PROGRAM) {
         prog_inst.as.prog->ret_ip = self->ip;
@@ -569,6 +575,9 @@ void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
             break;
         case INST_KIND_CMPG:
             handle_cmpg_inst(self);
+            break;
+        case INST_KIND_SSP:
+            handle_ssp_inst(self);
             break;
         default:
             ASSERT(false, "unreachable");

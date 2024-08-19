@@ -152,6 +152,7 @@ enum Inst_Kind {
     INST_KIND_LOAD,
     INST_KIND_LOADB,            // get a single byte
     INST_KIND_STRB,             // set a single byte
+    INST_KIND_SSP,              // set the stack pointer
     INST_KIND_NO_KIND,
 };
 
