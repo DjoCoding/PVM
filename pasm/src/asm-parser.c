@@ -69,6 +69,8 @@ bool is_instruction(String_View s, Inst_Kind *kind) {
         "cmpl",
         "cmpge",
         "cmpg",
+        "cmpe",
+        "cmpne",
         "jz",
         "jle",
         "jge",
@@ -84,6 +86,11 @@ bool is_instruction(String_View s, Inst_Kind *kind) {
         "loadb",
         "strb",
         "ssp",
+        "not",
+        "and",
+        "or",
+        "xor",
+        "writei",
     };
 
     size_t inst_size = sizeof(instructions)/sizeof(instructions[0]);

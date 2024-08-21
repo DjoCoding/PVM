@@ -2,6 +2,7 @@
 
 void machine_stack_push(Machine *self, int64_t value) {
     DA_APPEND(&self->stack, value);
+    // machine_dump_stack(self);
 }
 
 int64_t machine_stack_pop(Machine *self) {
@@ -9,6 +10,8 @@ int64_t machine_stack_pop(Machine *self) {
         machine_clean(self);
         THROW_ERROR("could not pop from the stack due to stack underflow");
     }
+
+    // machine_dump_stack(self);
     self->stack.count -= 1;
     return self->stack.items[self->stack.count];
 }

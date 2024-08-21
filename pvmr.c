@@ -21,6 +21,7 @@ int main(int argc, char **argv) {
 
     if (!filepath) { usage(program); }
 
+
     Machine m = machine_init(); 
     Program prog = machine_load_prog_from_file(filepath);
     machine_exec_prog(&m, prog);

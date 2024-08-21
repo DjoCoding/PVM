@@ -138,6 +138,8 @@ enum Inst_Kind {
     INST_KIND_CMPL,
     INST_KIND_CMPGE,
     INST_KIND_CMPG,
+    INST_KIND_CMPE, 
+    INST_KIND_CMPNE,
     INST_KIND_JZ,
     INST_KIND_JLE,
     INST_KIND_JGE,
@@ -153,6 +155,11 @@ enum Inst_Kind {
     INST_KIND_LOADB,            // get a single byte
     INST_KIND_STRB,             // set a single byte
     INST_KIND_SSP,              // set the stack pointer
+    INST_KIND_NOT,
+    INST_KIND_AND,
+    INST_KIND_OR,
+    INST_KIND_XOR,
+    INST_KIND_WRITEI,
     INST_KIND_NO_KIND,
 };
 

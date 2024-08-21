@@ -40,7 +40,7 @@ void depasm_write_line(FILE *f) {
 
 void depasm_write_inst_kind(FILE *f, Inst_Kind kind) {
     char *op_codes[] = {
-         "nop",
+        "nop",
         "halt",
         "push",
         "pushs",
@@ -61,6 +61,8 @@ void depasm_write_inst_kind(FILE *f, Inst_Kind kind) {
         "cmpl",
         "cmpge",
         "cmpg",
+        "cmpe",
+        "cmpne",
         "jz",
         "jle",
         "jge",
@@ -74,7 +76,13 @@ void depasm_write_inst_kind(FILE *f, Inst_Kind kind) {
         "store",
         "load",
         "loadb",
-        "strb"
+        "strb",
+        "ssp",
+        "not",
+        "and",
+        "or",
+        "xor",
+        "writei",
     };
 
     fprintf(f, "%s ", op_codes[kind]);

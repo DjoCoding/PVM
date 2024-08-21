@@ -31,6 +31,9 @@ void handle_push_inst(Machine *self, Inst inst) {
 
     push(self, op.value);
     self->ip++;
+
+    // printf("pushing %ld\n", op.value);
+    // machine_dump_stack(self);
 }
 
 void handle_pushs_inst(Machine *self, Inst inst) {
@@ -42,11 +45,13 @@ void handle_pushs_inst(Machine *self, Inst inst) {
     if (op.kind != OP_KIND_STRING) { THROW_ERROR("`push_str` instruction accepts a string as an operand"); }
 
     char *string = (char *)op.value;
+    
     size_t str_size = strlen(string);
-    size_t mem_index = alloc(self, str_size);
+    size_t mem_index = alloc(self, str_size + 1);
+    
     memcpy(self->memory.items[mem_index].data, string, str_size);
+    self->memory.items[mem_index].data[str_size] = 0;
 
-    // DA_APPEND(&self->str_stack, view);
 
     // push a pointer to the string
     push(self, (int64_t)self->memory.items[mem_index].data);
@@ -54,11 +59,16 @@ void handle_pushs_inst(Machine *self, Inst inst) {
     // pushing the index of the string in the string stack
     // push(self, index);
     self->ip++;
+
+    // printf("pushing string: %s\n", self->memory.items[mem_index].data);
+    // machine_dump_stack(self);
 }
 
 void handle_pop_inst(Machine *self) {
     pop(self);
     self->ip++;
+    // printf("poping\n");
+    // machine_dump_stack(self);
 }
 
 void handle_add_inst(Machine *self) {
@@ -66,6 +76,8 @@ void handle_add_inst(Machine *self) {
     int64_t result = lhs + rhs;
     push(self, result);
     self->ip++;
+    // printf("add %ld with %ld\n", lhs, rhs);
+    // machine_dump_stack(self);
 }
 
 void handle_sub_inst(Machine *self) {
@@ -73,6 +85,8 @@ void handle_sub_inst(Machine *self) {
     int64_t result = lhs - rhs;
     push(self, result);
     self->ip++;
+    // printf("sub %ld with %ld\n", lhs, rhs);
+    // machine_dump_stack(self);
 }
 
 
@@ -81,6 +95,8 @@ void handle_mul_inst(Machine *self) {
     int64_t result = lhs * rhs;
     push(self, result);
     self->ip++;
+    // printf("mul %ld with %ld\n", lhs, rhs);
+    // machine_dump_stack(self);
 }
 
 void handle_div_inst(Machine *self) {
@@ -89,6 +105,8 @@ void handle_div_inst(Machine *self) {
     int64_t result = lhs / rhs;
     push(self, result);
     self->ip++;
+    // printf("div %ld with %ld\n", lhs, rhs);
+    // machine_dump_stack(self);
 }
 
 void handle_mod_inst(Machine *self) {
@@ -97,6 +115,8 @@ void handle_mod_inst(Machine *self) {
     int64_t result = lhs % rhs;
     push(self, result);
     self->ip++;
+    // printf("mod %ld with %ld\n", lhs, rhs);
+    // machine_dump_stack(self);
 }
 
 void handle_swap_inst(Machine *self) {
@@ -104,12 +124,16 @@ void handle_swap_inst(Machine *self) {
     push(self, top);
     push(self, bottom);
     self->ip++;
+    // printf("swap %ld with %ld\n", top, bottom);
+    // machine_dump_stack(self);
 }
 
 void handle_dup_inst(Machine *self) {
     int64_t top = peek(self);
     push(self, top);
     self->ip++;
+    // printf("dup %ld\n", top);
+    // machine_dump_stack(self);
 }
 
 void handle_inswap_inst(Machine *self, Inst inst) {
@@ -128,9 +152,11 @@ void handle_inswap_inst(Machine *self, Inst inst) {
     self->stack.items[self->stack.count - 1] = self->stack.items[self->stack.count - pos - 1];
     self->stack.items[self->stack.count - pos - 1] = temp;
 
-    // machine_dump_stack(self);
+    machine_dump_stack(self);
 
     self->ip++;
+    // printf("swap %ld with %ld\n", self->stack.items[self->stack.count - 1], self->stack.items[self->stack.count - pos - 1]);
+    // machine_dump_stack(self);
 }
 
 void handle_indup_inst(Machine *self, Inst inst) {
@@ -147,18 +173,21 @@ void handle_indup_inst(Machine *self, Inst inst) {
 
     push(self, self->stack.items[self->stack.count - pos - 1]);
     self->ip++;
+    // printf("duplicate %ld\n", self->stack.items[self->stack.count - 1]);
+    // machine_dump_stack(self);
 }
 
 void handle_write_syscall(Machine *self) {
-    // size of the bytes: size
     // bytes to write: ptr
     // stream to write in: stream
 
-    size_t size =  (size_t) pop(self);
     char *bytes = (char *) pop(self);
     FILE *f = get_file_stream(pop(self));
 
-    fwrite(bytes, sizeof(char), size, f);
+    fwrite(bytes, sizeof(char), strlen(bytes), f);
+    
+    // printf("write %*.s\n", (int)size, bytes);
+    // machine_dump_stack(self);
 }
 
 void handle_read_syscall(Machine *self) {
@@ -180,6 +209,9 @@ void handle_alloc_syscall(Machine *self) {
     size_t size = (size_t)top;
     size_t cell_index = alloc(self, size);
     push(self, (int64_t)self->memory.items[cell_index].data);
+
+    // printf("alloc %ld\n", top);
+    // machine_dump_stack(self);
 }
 
 void handle_free_syscall(Machine *self) {
@@ -220,6 +252,9 @@ void handle_close_syscall(Machine *self) {
 
 void handle_exit_syscall(Machine *self) {
     int64_t exit_code = pop(self);
+    // printf("exit %ld\n", exit_code);
+    // machine_dump_stack(self);
+
     exit(exit_code);
 }
 
@@ -385,12 +420,23 @@ void handle_store_inst(Machine *self) {
     // where to write : ptr
     
     size_t size = (size_t)pop(self); 
-    char *data = (char *)pop(self);
+    int64_t data = pop(self);
     void *ptr = (void *)pop(self);
+
+    int64_t prev = 0;
+    memcpy(&prev, ptr, size);
     
-    memcpy(ptr, data, size);
+    memcpy(ptr, &data, size);
+    int64_t now = 0;
+    memcpy(&now, ptr, size);
     
     self->ip++;
+    
+    // printf("store %ld size: %zu in %p\n", data, size, ptr);
+    // printf("previously was %ld\n", prev);
+    // printf("now is: %ld\n", now);
+    
+    // machine_dump_stack(self);
 }
 
 void handle_strb_inst(Machine *self) {
@@ -424,6 +470,8 @@ void handle_load_inst(Machine *self) {
     push(self, data);
 
     self->ip++;
+    // printf("load %ld, size: %zu from %p\n", data, size, ptr);
+    // machine_dump_stack(self);
 }
 
 void handle_readc_inst(Machine *self) {
@@ -436,30 +484,94 @@ void handle_readc_inst(Machine *self) {
 void handle_cmple_inst(Machine *self) {
     int64_t rhs = pop(self), lhs = pop(self);
     push(self, (int64_t)(lhs <= rhs));
+    // printf("pushing %ld <= %ld == %d\n", lhs, rhs, lhs <= rhs);
+    // machine_dump_stack(self);
     self->ip++;
 }
 
 void handle_cmpl_inst(Machine *self) {
     int64_t rhs = pop(self), lhs = pop(self);
     push(self, (int64_t)(lhs < rhs));
+    // printf("pushing %ld < %ld == %d\n", lhs, rhs, lhs < rhs);
+    // machine_dump_stack(self);
     self->ip++;
 }
 
 void handle_cmpge_inst(Machine *self) {
     int64_t rhs = pop(self), lhs = pop(self);
     push(self, (int64_t)(lhs >= rhs));
+    // printf("pushing %ld >= %ld == %d\n", lhs, rhs, lhs >= rhs);
+    // machine_dump_stack(self);
     self->ip++;
 }
 
 void handle_cmpg_inst(Machine *self) {
     int64_t rhs = pop(self), lhs = pop(self);
     push(self, (int64_t)(lhs > rhs));
+    // printf("pushing %ld > %ld == %d\n", lhs, rhs, lhs > rhs);
+    // machine_dump_stack(self);
+    self->ip++;
+}
+
+void handle_cmpe_inst(Machine *self) {
+    int64_t rhs = pop(self), lhs = pop(self);
+    push(self, (int64_t)(lhs == rhs));
+    // printf("pushing %ld == %ld == %d\n", lhs, rhs, lhs == rhs);
+    // machine_dump_stack(self);
+    self->ip++;
+}
+
+void handle_cmpne_inst(Machine *self) {
+    int64_t rhs = pop(self), lhs = pop(self);
+    push(self, (int64_t)(lhs != rhs));
+    // printf("pushing %ld != %ld == %d\n", lhs, rhs, lhs != rhs);
+    // machine_dump_stack(self);
     self->ip++;
 }
 
 void handle_ssp_inst(Machine *self) {
     int64_t top = pop(self);
     self->stack.count = (size_t)top;
+    self->ip++;
+}
+
+void handle_not_inst(Machine *self) {
+    int64_t top = pop(self);
+    push(self, !top);
+    // printf("pushing !%ld = %d\n", top, !top);
+    // machine_dump_stack(self);
+    self->ip++;
+}
+
+void handle_and_inst(Machine *self) {
+    int64_t rhs = pop(self), lhs = pop(self);
+    push(self, rhs && lhs);
+    // printf("pushing %ld && %ld = %d\n", rhs, lhs, rhs && lhs);
+    // machine_dump_stack(self);
+    self->ip++;
+}
+
+void handle_or_inst(Machine *self) {
+    int64_t rhs = pop(self), lhs = pop(self);
+    push(self, rhs || lhs);
+    // printf("pushing %ld || %ld = %d\n", rhs, lhs, rhs || lhs);
+    // machine_dump_stack(self);
+    self->ip++;
+}
+
+void handle_xor_inst(Machine *self) {
+    int64_t rhs = pop(self), lhs = pop(self);
+    push(self, rhs ^ lhs);
+    // printf("pushing %ld ^ %ld = %ld\n", rhs, lhs, rhs ^ lhs);
+    // machine_dump_stack(self);
+    self->ip++;
+}
+
+void handle_writei_inst(Machine *self) {
+    int64_t value = pop(self);
+    FILE *f = get_file_stream(pop(self));
+
+    fprintf(f, "%ld", value);
     self->ip++;
 }
 
@@ -576,8 +688,29 @@ void machine_exec_inst(Machine *self, Program_Inst prog_inst) {
         case INST_KIND_CMPG:
             handle_cmpg_inst(self);
             break;
+        case INST_KIND_CMPE:
+            handle_cmpe_inst(self);
+            break;
+        case INST_KIND_CMPNE:
+            handle_cmpne_inst(self);
+            break;
         case INST_KIND_SSP:
             handle_ssp_inst(self);
+            break;
+        case INST_KIND_NOT:
+            handle_not_inst(self);
+            break;
+        case INST_KIND_AND:
+            handle_and_inst(self);
+            break;
+        case INST_KIND_OR:
+            handle_or_inst(self);
+            break;
+        case INST_KIND_XOR:
+            handle_xor_inst(self);
+            break;
+        case INST_KIND_WRITEI:
+            handle_writei_inst(self);
             break;
         default:
             ASSERT(false, "unreachable");
