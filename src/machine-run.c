@@ -152,7 +152,7 @@ void handle_inswap_inst(Machine *self, Inst inst) {
     self->stack.items[self->stack.count - 1] = self->stack.items[self->stack.count - pos - 1];
     self->stack.items[self->stack.count - pos - 1] = temp;
 
-    machine_dump_stack(self);
+    // machine_dump_stack(self);
 
     self->ip++;
     // printf("swap %ld with %ld\n", self->stack.items[self->stack.count - 1], self->stack.items[self->stack.count - pos - 1]);
